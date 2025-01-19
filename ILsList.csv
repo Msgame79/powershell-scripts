@@ -1,29 +1,30 @@
-Mansion,Pinch,No Pinch
-Train,Pinch,No Pinch
-Carry
-Mountain,Pinch,No Pinch
-Demolition,Glitchless,Glitches Allowed
-Castle
-Water,Glitchless,Glitches Allowed
-Power Plant,Glitchless,Glitches Allowed
-Aztec,Glitchless,Glitches Allowed
-Dark,Glitchless,Glitches Allowed
-Steam,Pinch,No Pinch,Glitchless
-Ice,Glitchless,Glitches Allowed
-Reprise
-Thermal,Glitchless,Glitches Allowed
-Factory,Glitchless,Glitches Allowed
-Golf,Glitchless,Glitches Allowed
-City,Glitchless,Glitches Allowed
-Forest,Glitchless,Glitches Allowed
-Laboratory,Glitchless,Glitches Allowed
-Lumber,Glitchless,Glitches Allowed
-Red Rock,Glitchless,Glitches Allowed
-Tower,Pinch,No Pinch,Glitchless
-Miniature,Glitchless,Glitches Allowed
-Copper World,Glitchless,Glitches Allowed
-Port,Glitchless,Glitches Allowed
-Underwater,Glitchless,Glitches Allowed
-Dockyard,Glitchless,Glitches Allowed
-Museum,Glitchless,Glitches Allowed
-Hike,Glitchless,Glitches Allowed
+Name,Pinch,No Pinch,Glitchless,Glitches Allowed
+Mansion,Pinch,No Pinch,,
+Train,Pinch,No Pinch,,
+Carry,,,,
+Mountain,Pinch,No Pinch,,
+Demolition,,,Glitchless,Glitches Allowed
+Castle,,,,
+Water,,,Glitchless,Glitches Allowed
+Power Plant,,,Glitchless,Glitches Allowed
+Aztec,,,Glitchless,Glitches Allowed
+Dark,,,Glitchless,Glitches Allowed
+Steam,Pinch,No Pinch,Glitchless,
+Ice,,,Glitchless,Glitches Allowed
+Reprise,,,,
+Thermal,,,Glitchless,Glitches Allowed
+Factory,,,Glitchless,Glitches Allowed
+Golf,,,Glitchless,Glitches Allowed
+City,,,Glitchless,Glitches Allowed
+Forest,,,Glitchless,Glitches Allowed
+Laboratory,,,Glitchless,Glitches Allowed
+Lumber,,,Glitchless,Glitches Allowed
+Red Rock,,,Glitchless,Glitches Allowed
+Tower,Pinch,No Pinch,Glitchless,
+Miniature,,,Glitchless,Glitches Allowed
+Copper World,,,Glitchless,Glitches Allowed
+Port,,,Glitchless,Glitches Allowed
+Underwater,,,Glitchless,Glitches Allowed
+Dockyard,,,Glitchless,Glitches Allowed
+Museum,,,Glitchless,Glitches Allowed
+Hike,,,Glitchless,Glitches Allowed
