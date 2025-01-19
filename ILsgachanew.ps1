@@ -93,31 +93,31 @@ $leveltype
 
 $levelid
 
-if ($levelid -match "^[0-9]{1,5}$") { #normal
+if ($levelid -match "^[0-9]{1,3}$") { #normal
 
     switch ($leveltype) {
 
         0 {
 
-            
+            $categoryindex=0, 1 | Get-SecureRandom
 
         }
 
         1 {
 
-
+            $categoryindex=6, 7, 8, 9 | Get-SecureRandom
 
         }
 
         2 {
 
-
+            $categoryindex=2, 3, 4, 5 | Get-SecureRandom
 
         }
 
         3 {
 
-
+            $categoryindex=2, 3, 4, 5, 6, 7 | Get-SecureRandom
 
         }
 
@@ -125,6 +125,6 @@ if ($levelid -match "^[0-9]{1,5}$") { #normal
 
 } else { # workshop
 
-    "workshop"
+    
 
 }
