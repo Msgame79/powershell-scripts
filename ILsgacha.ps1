@@ -3,7 +3,7 @@ chcp 65001
 <#
 使い方
 
-PowerShell Core 7以上で動作します。インストールしていない場合はhttps://github.com/PowerShell/PowerShell/releases でwindows用インストーラー(arm65ではなくx64)をダウンロードまたはwingetでインストール(winget install Microsoft.PowerShellまたはwinget install Microsoft.PowerShell.Preview)
+PowerShell Core 7以上で動作します。インストールしていない場合はhttps://github.com/PowerShell/PowerShell/releases でwindows用インストーラーをダウンロードまたはwingetでインストール(winget install Microsoft.PowerShellまたはwinget install Microsoft.PowerShell.Preview)
 ILsガチャを回してILsgacha.txt(160行目で変更可能)にリアルタイムで書き込みます。OBSのテキストソースで読み込むことができます。
 #>
 
