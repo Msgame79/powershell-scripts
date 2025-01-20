@@ -27,21 +27,21 @@ workshop(プレイできないカテゴリ(Any% Glitched,Any% Glitchless,All Che
 #>
 
 $categories=@(
-    'Any%'
-    'Checkpoint%'
-    'Any% Pinch'
-    'Checkpoint% Pinch'
-    'Any% No Pinch'
-    'Checkpoint% No Pinch'
-    'Any% Glitchless'
-    'Checkpoint% Glitchless'
-    'Any% Glitches Allowed'
-    'Checkpoint% Glitches Allowed'
+    'Any%' # 0
+    'Checkpoint%' # 1
+    'Any% Pinch' # 2
+    'Checkpoint% Pinch' # 3
+    'Any% No Pinch' # 4
+    'Checkpoint% No Pinch' # 5
+    'Any% Glitchless' # 6
+    'Checkpoint% Glitchless' # 7
+    'Any% Glitches Allowed' # 8
+    'Checkpoint% Glitches Allowed' # 9
     # below here are used for workshop
-    'Any% Glitched'
-    'All Checkpoints% Glitched'
-    'Any% Glitchless'
-    'All Checkpoints% Glitchless'
+    'Any% Glitched' # 10
+    'All Checkpoints% Glitched' # 11
+    'Any% Glitchless' # 12
+    'All Checkpoints% Glitchless' # 13
 )
 
 Clear-Host
@@ -77,54 +77,180 @@ foreach ($row in $csvlist) {
 
 $levelscount=$levellist.Count-1
 
-$levelindex=Get-SecureRandom -Minimum 0 -Maximum $levelscount
+While ($true) {
 
-$level=$levellist[$levelindex]
+    $levelindex=Get-SecureRandom -Minimum 0 -Maximum $levelscount
 
-$levelname=$level[0]
+    $levelinfo=$levellist[$levelindex]
 
-$leveltype=$level[1]
+    $levelname=$levelinfo[0]
 
-[string]$levelid=$level[2]
+    $leveltype=$levelinfo[1]
 
-$levelname
+    [string]$levelid=$levelinfo[2]
 
-$leveltype
+    if ($levelid -match "^[0-9]{1,3}$") { #normal
 
-$levelid
+        switch -Exact ($leveltype) {
 
-if ($levelid -match "^[0-9]{1,3}$") { #normal
+            0 {
 
-    switch ($leveltype) {
+                $categoryindex=0, 1 | Get-SecureRandom
 
-        0 {
+            }
 
-            $categoryindex=0, 1 | Get-SecureRandom
+            1 {
+
+                $categoryindex=6, 7, 8, 9 | Get-SecureRandom
+
+            }
+
+            2 {
+
+                $categoryindex=2, 3, 4, 5 | Get-SecureRandom
+
+            }
+
+            3 {
+
+                $categoryindex=2, 3, 4, 5, 6, 7 | Get-SecureRandom
+
+            }
 
         }
 
-        1 {
+    } else { # workshop
 
-            $categoryindex=6, 7, 8, 9 | Get-SecureRandom
+        switch -Exact ($leveltype) {
 
-        }
+            0 {
 
-        2 {
+                $categoryindex=10, 11, 12, 13 | Get-SecureRandom
 
-            $categoryindex=2, 3, 4, 5 | Get-SecureRandom
+            }
 
-        }
+            1 {
 
-        3 {
+                $categoryindex=10, 11, 12 | Get-SecureRandom
 
-            $categoryindex=2, 3, 4, 5, 6, 7 | Get-SecureRandom
+            }
+
+            2 {
+
+                $categoryindex=10, 11, 13 | Get-SecureRandom
+
+            }
+
+            3 {
+
+                $categoryindex=10, 11 | Get-SecureRandom
+
+            }
+
+            4 {
+
+                $categoryindex=10, 12, 13 | Get-SecureRandom
+
+            }
+
+            5 {
+
+                $categoryindex=10, 12 | Get-SecureRandom
+
+            }
+
+            6 {
+
+                $categoryindex=10, 13 | Get-SecureRandom
+
+            }
+
+            7 {
+
+                $categoryindex=10
+
+            }
+
+            8 {
+
+                $categoryindex=11, 12, 13 | Get-SecureRandom
+
+            }
+
+            9 {
+
+                $categoryindex=11, 12 | Get-SecureRandom
+
+            }
+
+            10 {
+
+                $categoryindex=11, 13 | Get-SecureRandom
+
+            }
+
+            11 {
+
+                $categoryindex=11
+
+            }
+
+            12 {
+
+                $categoryindex=12, 13 | Get-SecureRandom
+
+            }
+
+            13 {
+
+                $categoryindex=12
+
+            }
+
+            14 {
+
+                $categoryindex=13
+
+            }
 
         }
 
     }
 
-} else { # workshop
+    $category=$categories[$categoryindex]
 
-    
+    $pbindex=$categoryindex * 2 + 3
+
+    $wrindex=$categoryindex * 2 + 4
+
+    $pb=$levelinfo[$pbindex]
+
+    $wr=$levelinfo[$wrindex]
+
+    Do { #おなじみの成功するまで書き込み
+
+        Try {
+
+            $flag=$true
+
+            "$levelname $category`n$levelid`nPB: $pb`nWR: $wr"
+
+            "$levelname $category`nPB: $pb|WR: $wr" | Out-File -FilePath "..\sources\ILsgacha.txt" -Encoding utf8NoBOM
+
+        } Catch {
+
+            $flag=$false
+
+        }
+
+    } Until ($flag)
+
+    "Enterで再抽選、Ctrl+Cで終了"
+
+    Read-Host
+
+    Clear-Host
 
 }
+
+$categories
