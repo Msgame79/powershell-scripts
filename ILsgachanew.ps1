@@ -1,5 +1,11 @@
 chcp 65001
 
+$ErrorActionPreference = 'Stop'
+
+Set-Location $PSScriptRoot
+
+$textpath = "..\sources\ILsgacha.txt" # 出力ファイルのパス
+
 <#
 CSVの書式(CategoriesType)
 normal(PinchとGlitchlessの存在を2進数判定)
@@ -48,11 +54,10 @@ Clear-Host
 
 $list=""
 
-# Githubからダウンロードして使うなら↓のコメントアウトを解除(遅い)
-# $list = Invoke-RestMethod -URI "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ILsListNew.csv"
-
-# csvをどこかに保存して使うなら↓のコメントアウトを解除(速い)ダウンロードはhttps://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ILsListNew.csv
 $list = Get-Content -Path .\ILsListNew.csv -Encoding utf8NoBOM
+
+# ファイルへのリンクから取得するなら↓をコメントアウト解除エクスプローラーををちょっと綺麗にしたい人用)
+# $list = Invoke-RestMethod -URI ""
 
 if ($list -eq "") {
 
@@ -235,7 +240,7 @@ While ($true) {
 
             "$levelname $category`n$levelid`nPB: $pb`nWR: $wr"
 
-            "$levelname $category`nPB: $pb|WR: $wr" | Out-File -FilePath "..\sources\ILsgacha.txt" -Encoding utf8NoBOM
+            "$levelname $category`nPB: $pb|WR: $wr`nJust A Random Level! All Checkpoints% Glitchless" | Out-File -FilePath $textpath -Encoding utf8NoBOM
 
         } Catch {
 
