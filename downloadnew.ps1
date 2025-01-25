@@ -2,6 +2,8 @@ chcp 65001
 
 Set-Location $PSScriptRoot
 
+[bool]$flag=$false
+
 Clear-Host
 
 [string]$downloadfolder = "."
@@ -66,7 +68,7 @@ Do {
 
         $flag=$true
 
-        Remove-Item -Path ".\$uuid.mp3"
+        Remove-Item -Path ".\temp$uuid.mp3"
 
     } Catch {
 
