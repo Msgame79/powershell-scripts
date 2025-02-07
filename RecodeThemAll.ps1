@@ -11,6 +11,20 @@ set-location $PSScriptRoot
 [bool]$flag1 = $false
 [string]$prefix = "re_"
 
+# check if ffmpeg and ffprobe are available
+ffprobe -version | Out-Null
+if (-not $?) {
+    "ffprobe is unabailable`nenter to exit"
+    Read-Host
+    exit
+}
+ffmpeg -version | Out-Null
+if (-not $?) {
+    "ffmpeg is unabailable`nenter to exit"
+    Read-Host
+    exit
+}
+
 $files = get-childitem -name | Where-Object {$_ -match ".*\.(mp4|mkv|mov|webm)"}
 $files | ForEach-Object {
     $result = ffprobe -hide_banner -loglevel 16 -of "default=nw=1:nk=1" -select_streams v:0 -show_entries "stream=codec_name" $_
