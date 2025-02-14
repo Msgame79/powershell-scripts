@@ -10,7 +10,48 @@ PowerShell テンプレートファイル
 
 
 2.基本コマンド
-Get-Help
+2.1 コマンド構文
+PowerShell コマンドレットの場合
+動詞-名詞 [-オプション...]
+(エイリアスが存在する場合もある)
+
+ps1ファイルの実行
+.\hoge.ps1
+
+cmd コマンド
+コマンド名 [/オプション...]
+
+
+Get-Help コマンド名 [-Online]
+コマンドのヘルプを表示
+-Onlineを付けるとMicrosoftの公式ドキュメントページを開く(おすすめ)
+エイリアス: help
+
+Set-Location フォルダ
+作業フォルダを移動する
+作業フォルダはエクスプローラーで言えば「フォルダを見ている状態」
+パスの指定は絶対パス(ドライブ名からフォルダまでの全ての道のり、フルパスともいう)か相対パス(現在のフォルダを.、一つ上のフォルダを..としてフォルダを相対的に指定)
+エイリアス: cd
+
+Get-ChildItem [-Name] [-Recurse] [-Directory]
+作業フォルダ内のファイルとフォルダを表示
+-Nameオプションを付けるとファイル名とフォルダ名のみ表示
+-Recurseオプションを付けるとフォルダの中のファイルやフォルダの中のフォルダ(サブフォルダとも呼ばれる)を表示
+-Directoryオプションを付けるとフォルダのみ表示
+ファイルのみ表示したい場合は
+((Get-ChildItem [-Recurse]) | Where-Object{$_.Mode -match "^[^d]"}).Name
+↑では()や|も書くので[]以外コピペがおすすめ
+エイリアス:ls、dir、gci
+
+Get-Content
+
+
+
+
+
+
+
+
 
 
 #>
@@ -49,3 +90,4 @@ function versioncheck { # 特定以上のバージョンを使うよう指示
 # メイン処理
 Set-Location $DefaultDirectory
 versioncheck 7
+Get-ChildItem 
