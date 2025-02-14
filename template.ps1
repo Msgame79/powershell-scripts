@@ -15,7 +15,7 @@ $ErrorActionPreference = 'Continue'
 
 # 関数一覧
 function versioncheck { # 特定以上のバージョンを使うよう指示
-    param (
+    param ( # 引数一覧(コンマで区切るのを忘れない!)
         [int]$a = 5 # 初期値
     )
     if ($PSVersionTable.PSVersion.Major -lt $a) {
