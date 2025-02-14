@@ -1,3 +1,4 @@
+# PowerShell テンプレートファイル
 # 文字エンコードの指定
 chcp 65001
 
@@ -15,16 +16,14 @@ $ErrorActionPreference = 'Continue'
 # 関数一覧
 function versioncheck { # 特定以上のバージョンを使うよう指示
     param (
-        [int]$a = 5
+        [int]$a = 5 # 初期値
     )
-    [string]$b = ""
-    if ($PSVersionTable.PSVersion.Major -lt $versionrequirement) {
-        $b = "Please run this ps1 file on PowerShell $versionrequirement or newer`nEnter to exit"
+    if ($PSVersionTable.PSVersion.Major -lt $a) {
+        "Please run this ps1 file on PowerShell $a or newer`nEnter to exit"
         Read-Host
         Start-Process "https://github.com/PowerShell/PowerShell/releases/latest"
         Exit
     }
-    return $b
 }
 
 # メイン処理
