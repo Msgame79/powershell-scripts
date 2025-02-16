@@ -8,6 +8,7 @@ PowerShell テンプレートファイル
 渡るコメント
 #⁣> ←コメントアウトの最後じゃないのでU+2063を#と>の間に書いています
 
+Get-Content <#行の一部だけコメント#⁣> -Recurse
 
 2.基本コマンド
 2.1 コマンド構文
@@ -55,10 +56,11 @@ Get-Content
 
 
 #>
+
 <#
 文字エンコードの指定
-932:Windows 932(Shift-JISと互換)
-65001:UTF-8(世界共通の規格で最も推奨)
+932:Windows 932(Shift-JISと互換、cmdとWindows PowerShell(5.1)のデフォルト)
+65001:UTF-8(世界共通の規格で最も推奨、PowerShell Coreのデフォルト)
 1200:UTF-16(バイト数多め)
 #>
 chcp 65001
