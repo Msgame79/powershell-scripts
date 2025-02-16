@@ -158,7 +158,7 @@ While (1) {
 
     # プレビュー
     "プレビューの準備完了。ffplayを終了するにはffplayをフォーカスしてEscやAlt+F4を使用してください"
-    $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
+    $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""Preview"" -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
 
     # 動画作成に入る前の確認
     do {
