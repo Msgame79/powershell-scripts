@@ -257,5 +257,7 @@ While (1) {
         ffmpeg -hide_banner -loglevel -8 -f lavfi -i "color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}" -vf "${timertext}" -t $fulllength $vencodingoptions "${filename}.mp4"
         ffmpeg -hide_banner -loglevel -8 -i "${filename}.mp4" -frames:v 1 "${filename}_begin.png"
         ffmpeg -hide_banner -loglevel -8 -sseof $1flength -i "${filename}.mp4" "${filename}_final.png"
+        "完成。Enterで終了"
+        exit
     }
 }
