@@ -29,6 +29,7 @@ $ErrorActionPreference = 'Continue'
 [int]$textx = 0
 [int]$texty = 0
 [string]$timertext = ""
+[int]$count = 0
 [array]$ffplay = @()
 [string]$confirm = ""
 [string]$length = "0"
@@ -158,6 +159,7 @@ While (1) {
 
     # プレビュー
     "プレビューの準備完了。ffplayを終了するにはffplayをフォーカスしてEscやAlt+F4を使用してください"
+    $count = $ffplay.Count + 1
     $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""Preview"" -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
 
     # 動画作成に入る前の確認
