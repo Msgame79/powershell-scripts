@@ -1,17 +1,15 @@
-<#
-文字エンコードの指定
-932:Windows 932(Shift-JISと互換、cmdとWindows PowerShell(5.1)のデフォルト)
-65001:UTF-8(世界共通の規格で最も推奨、PowerShell Coreのデフォルト)
-1200:UTF-16(バイト数多め)
-#>
 chcp 65001
+$ErrorActionPreference = 'Continue'
 
 <#
-エラーメッセージの処理
-Continue(デフォルト):表示しつつ続ける
-SilentlyContinue:表示せずに続ける
+可変フォントしかない場合はweightを指定してstaticフォントにする
+必要なもの
+Python 3.13
+fonttools package
+install: pip install fonttools
+コマンド
+fonttools varLib.mutator font.ttf wght=400
 #>
-$ErrorActionPreference = 'Continue'
 
 # 使う変数の初期値(これを書くことで編集を容易にできる)
 # 同時に型を指定すると何を入れればいいのか明瞭になる
@@ -160,7 +158,7 @@ While (1) {
     # プレビュー
     "プレビューの準備完了。ffplayを終了するにはffplayをフォーカスしてEscやAlt+F4を使用してください"
     $count = $ffplay.Count + 1
-    $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""Preview"" -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
+    $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""Preview${count}"" -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
 
     # 動画作成に入る前の確認
     do {
