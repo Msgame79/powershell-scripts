@@ -29,6 +29,7 @@ $ErrorActionPreference = 'Continue'
 [int]$textx = 0
 [int]$texty = 0
 [string]$timertext = ""
+[array]$ffplay = @()
 [string]$confirm = ""
 [string]$length = "0"
 [int]$hour = 0
@@ -102,7 +103,7 @@ While (1) {
         $fps = $fpstext | Invoke-Expression
     } until ($?)
     $ErrorActionPreference = 'Continue'
-    
+
     # 文字色の入力
     do {
         $textcolor = Read-Host -Prompt "文字の色(RGBカラーコードまたは色の名前)"
@@ -110,7 +111,7 @@ While (1) {
     if ($textcolor -match "^#?([0-9a-fA-F]{6})$") {
         $textcolor = $Matches[1]
     }
-    
+
     # 背景色の入力
     do {
         $backgroundcolor = Read-Host -Prompt "背景の色(RGBカラーコードまたは色の名前)"
@@ -118,13 +119,13 @@ While (1) {
     if ($backgroundcolor -match "^#?([0-9a-fA-F]{6})$") {
         $backgroundcolor = $Matches[1]
     }
-    
+
     #文字サイズの指定
     do {
         $textsizetext = Read-Host -Prompt "文字サイズ(正の整数)"
     } until ($textsizetext -match "\d+" -and ($textsizetext | Invoke-Expression) -ne 0)
     $textsize = $textsizetext | Invoke-Expression
-    
+
     #画面サイズの指定
     do {
         $widthtext = Read-Host -Prompt "背景の幅(正の整数)"
@@ -134,7 +135,7 @@ While (1) {
         $heighttext = Read-Host -Prompt "背景の高さ(正の整数)"
     } until ($heighttext -match "\d+" -and ($heighttext | Invoke-Expression) -ne 0)
     $height = $heighttext
-    
+
     #文字座標の指定
     do {
         $textxtext = Read-Host -Prompt "文字のx座標(正負の整数)"
@@ -144,7 +145,7 @@ While (1) {
         $textytext = Read-Host -Prompt "文字のy座標(正負の整数)"
     } until ($textytext -match "-?\d+")
     $texty = $textytext
-    
+
     # 0埋めの確認
     do {
         $dopad = Read-Host -Prompt "1: 0埋めする 2: 0埋めしない"
@@ -154,17 +155,21 @@ While (1) {
     } else {# 2を選んだ場合
         $timertext = "drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:fontcolor=${textcolor}:text='%{eif\:mod(floor(mod(floor(t/3600),60)/24),100)\:u\:2}\:%{eif\:mod(mod(floor(t/3600),60),24)\:u\:2}\:%{eif\:mod(floor(t/60),60)\:u\:2}\:%{eif\:mod(floor(t),60)\:u\:2}.%{eif\:floor(mod(n/${fps},1)*1000)\:u\:3}'"
     }
-    
+
     # プレビュー
     "プレビューの準備完了。ffplayを終了するにはffplayをフォーカスしてEscやAlt+F4を使用してください"
-    ffplay -hide_banner -loglevel -8 -f lavfi -i "color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}" -vf "${timertext}"
-    
+    $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -PassThru).Id
+
     # 動画作成に入る前の確認
     do {
         $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN)`nnNを選択すると最初からやりなおします"
     } until ($confirm -match "^[yYnN]$")
     if ($confirm -match "^[yY]$") {
-    
+        $ffplay | ForEach-Object{
+            Stop-Process -Id $_
+        }
+        $ffplay = @()
+
         # 動画時間の取得
         do {
             $length = Read-Host -Prompt "動画時間([秒(.ミリ秒)]表記と[((時間:)分:)秒(.ミリ秒)]表記のどちらにも対応`n(時間と分、分と秒のデリミタは:;のどちらか、秒とミリ秒のデリミタは.))"
@@ -178,7 +183,7 @@ While (1) {
         }
         $1flength = -1 / $fps
         $fulllength = $length + 1 / $fps
-    
+
         # 出力ファイル名の指定
         do {
             do {
@@ -195,7 +200,7 @@ While (1) {
                 }
             }
         } until ($flag)
-    
+
         #実際に出力
         ffmpeg -hide_banner -loglevel -8 -f lavfi -i "color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}" -vf "${timertext}" -t $fulllength $vencodingoptions "${filename}.mp4"
         ffmpeg -hide_banner -loglevel -8 -i "${filename}.mp4" -frames:v 1 "${filename}_begin.png"
