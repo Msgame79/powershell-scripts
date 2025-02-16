@@ -1,63 +1,4 @@
 <#
-PowerShell テンプレートファイル
-
-1.コメントアウト(VSCodeでは緑で表示)
-# ←これより後は改行するまでコメント 
-<#
-複数行に
-渡るコメント
-#⁣> ←コメントアウトの最後じゃないのでU+2063を#と>の間に書いています
-
-Get-Content <#行の一部だけコメント#⁣> -Recurse
-
-2.基本コマンド
-2.1 コマンド構文
-PowerShell コマンドレットの場合
-動詞-名詞 [-オプション...]
-(エイリアスが存在する場合もある)
-
-ps1ファイルの実行
-.\hoge.ps1
-
-cmd コマンド
-コマンド名 [/オプション...]
-
-
-Get-Help コマンド名 [-Online]
-コマンドのヘルプを表示
--Onlineを付けるとMicrosoftの公式ドキュメントページを開く(おすすめ)
-エイリアス: help
-
-Set-Location フォルダ
-作業フォルダを移動する
-作業フォルダはエクスプローラーで言えば「フォルダを見ている状態」
-パスの指定は絶対パス(ドライブ名からフォルダまでの全ての道のり、フルパスともいう)か相対パス(現在のフォルダを.、一つ上のフォルダを..としてフォルダを相対的に指定)
-エイリアス: cd
-
-Get-ChildItem [-Name] [-Recurse] [-Directory]
-作業フォルダ内のファイルとフォルダを表示
--Nameオプションを付けるとファイル名とフォルダ名のみ表示
--Recurseオプションを付けるとフォルダの中のファイルやフォルダの中のフォルダ(サブフォルダとも呼ばれる)を表示
--Directoryオプションを付けるとフォルダのみ表示
-ファイルのみ表示したい場合は
-((Get-ChildItem [-Recurse]) | Where-Object{$_.Mode -match "^[^d]"}).Name
-↑では()や|も書くので[]以外コピペがおすすめ
-エイリアス:ls、dir、gci
-
-Get-Content
-
-
-
-
-
-
-
-
-
-
-#>
-
-<#
 文字エンコードの指定
 932:Windows 932(Shift-JISと互換、cmdとWindows PowerShell(5.1)のデフォルト)
 65001:UTF-8(世界共通の規格で最も推奨、PowerShell Coreのデフォルト)
@@ -98,7 +39,7 @@ $ErrorActionPreference = 'Continue'
 [single]$fulllength = 0
 [string]$filename = ""
 [bool]$flag = $true
-[string]$vencodingoptions = "-c:v h264_nvenc -qmax 22 -qmin 22 -bf 0"
+[string]$vencodingoptions = "-c:v h264_nvenc -qmax 22 -qmin 22"
 
 # 関数一覧
 function versioncheck { # 特定以上のバージョンを使うよう指示
@@ -149,7 +90,9 @@ While (1) {
         Read-Host
         exit
     }
-    
+
+    "入力する情報`nFPS`n文字の色`n背景の色`n文字サイズ`n背景の幅`n背景の高さ`n文字のx座標`n文字のy座標`n0埋めするか`n動画にするか`n動画時間`n拡張子なしのファイル名`nメモ帳などでパラメータをメモするのをおすすめします"
+
     # FPS入力
     $ErrorActionPreference = 'SilentlyContinue'
     do {
@@ -204,7 +147,7 @@ While (1) {
     
     # 0埋めの確認
     do {
-        $dopad = Read-Host -Prompt "1: 0埋めする 2: 0埋めしない "
+        $dopad = Read-Host -Prompt "1: 0埋めする 2: 0埋めしない"
     } until ($dopad -match "^[12]$")
     if ([int]$dopad - 2 * -1) {# 1を選んだ場合
         $timertext = "drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:fontcolor=${textcolor}:text='%{eif\:mod(floor(mod(floor(t/3600),60)/24),100)\:u\:2}\:%{eif\:mod(mod(floor(t/3600),60),24)\:u\:2}\:%{eif\:mod(floor(t/60),60)\:u\:2}\:%{eif\:mod(floor(t),60)\:u\:2}.%{eif\:floor(mod(n/${fps},1)*1000)\:u\:3}',drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='00\:00\:00\:0':enable=lt(mod(t\,8640000)\,10),drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='00\:00\:00\:':enable=lt(mod(t\,8640000)\,60),drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='00\:00\:0':enable=lt(mod(t\,8640000)\,600),drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='00\:00\:':enable=lt(mod(t\,8640000)\,3600),drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='00\:0':enable=lt(mod(t\,8640000)\,36000),drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='00\:':enable=lt(mod(t\,8640000)\,86400),drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:borderw=2:bordercolor=${backgroundcolor}:fontcolor=${backgroundcolor}:text='0':enable=lt(mod(t\,8640000)\,864000)"
