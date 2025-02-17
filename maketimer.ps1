@@ -11,9 +11,13 @@ install: pip install fonttools
 fonttools varLib.mutator font.ttf wght=400
 #>
 
-# 使う変数の初期値(これを書くことで編集を容易にできる)
-# 同時に型を指定すると何を入れればいいのか明瞭になる
+# 使う変数の初期値(編集可能)
+# 同時に型を指定すると何を入れればいいのか明確になる
 [string]$DefaultDirectory = $PSScriptRoot
+[string]$vencodingoptions = "-c:v h264_nvenc -qmax 22 -qmin 22"
+
+# 使う変数の初期値(編集不可能)
+# スクリプト内で変更されるので書き換える意味がない
 [string]$fontfile = ""
 [string]$dopad = ""
 [string]$fpstext = ""
@@ -40,12 +44,11 @@ fonttools varLib.mutator font.ttf wght=400
 [single]$fulllength = 0
 [string]$filename = ""
 [bool]$flag = $true
-[string]$vencodingoptions = "-c:v h264_nvenc -qmax 22 -qmin 22"
 
 # 関数一覧
 function versioncheck { # 特定以上のバージョンを使うよう指示
     param ( # 引数一覧(コンマで区切るのを忘れない!)
-        [int]$a = 5 # 初期値
+        [int]$a = 5 # 引数を取らなかったときの初期値
     )
     if ($PSVersionTable.PSVersion.Major -lt $a) {
         "Please run this ps1 file on PowerShell $a or newer`nEnter to exit"
@@ -166,7 +169,7 @@ While (1) {
 
         # 動画作成に入る前の確認
         do {
-            $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN)`nnNを選択すると最初からやりなおします`nRで現在のプレビューを最初に戻します"
+            $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN|rR)`nnNを選択すると最初からやりなおします`nRで現在のプレビューを最初に戻します"
         } until ($confirm -match "^[yYnNrR]$")
         if (($confirm -match "^[rR]$") -and ($ffplay.Count -eq $count)) {
             Stop-Process -Id $ffplay[$ffplay.Count - 1]
