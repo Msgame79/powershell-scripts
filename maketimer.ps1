@@ -166,7 +166,7 @@ While (1) {
             $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN)`nnNを選択すると最初からやりなおします`nRで現在のプレビューを最初に戻します"
         } until ($confirm -match "^[yYnNrR]$")
         if (($confirm -match "^[rR]$")) {
-            Stop-Process -Id $ffplay[$ffplay.Count]
+            Stop-Process -Id $ffplay[$ffplay.Count - 1]
         }
     } until ($confirm -match "^[yYnN]$")
     if ($confirm -match "^[yY]$") {
