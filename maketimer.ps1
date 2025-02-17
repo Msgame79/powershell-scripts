@@ -31,6 +31,7 @@ fonttools varLib.mutator font.ttf wght=400
 [array]$ffplay = @()
 [string]$confirm = ""
 [string]$length = "0"
+[Single]$length1 = 1
 [int]$hour = 0
 [int]$minute = 0
 [int]$second = 0
@@ -98,8 +99,8 @@ While (1) {
     do {
         do {
             $fpstext = Read-Host -Prompt "FPS(正の実数)"
-        } until ($fpstext -match "^\d+\.?\d*$" -and ($fpstext | Invoke-Expression) -ne 0)
-        $fps = $fpstext | Invoke-Expression
+        } until ($fpstext -match "^\d+\.?\d*$" -and ($fpstext) -ne 0)
+        $fps = $fpstext
     } until ($?)
     $ErrorActionPreference = 'Continue'
 
@@ -120,19 +121,21 @@ While (1) {
     }
 
     #文字サイズの指定
+    $ErrorActionPreference = 'SilentlyContinue'
     do {
         $textsizetext = Read-Host -Prompt "文字サイズ(正の整数)"
-    } until ($textsizetext -match "\d+" -and ($textsizetext | Invoke-Expression) -ne 0)
-    $textsize = $textsizetext | Invoke-Expression
+    } until ($textsizetext -match "\d+" -and ($textsizetext) -ne 0)
+    $textsize = $textsizetext
+    $ErrorActionPreference = 'Continue'
 
     #画面サイズの指定
     do {
         $widthtext = Read-Host -Prompt "背景の幅(正の整数)"
-    } until ($widthtext -match "\d+" -and ($widthtext | Invoke-Expression) -ne 0)
+    } until ($widthtext -match "\d+" -and ($widthtext) -ne 0)
     $width = $widthtext
     do {
         $heighttext = Read-Host -Prompt "背景の高さ(正の整数)"
-    } until ($heighttext -match "\d+" -and ($heighttext | Invoke-Expression) -ne 0)
+    } until ($heighttext -match "\d+" -and ($heighttext) -ne 0)
     $height = $heighttext
 
     #文字座標の指定
@@ -165,7 +168,7 @@ While (1) {
         do {
             $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN)`nnNを選択すると最初からやりなおします`nRで現在のプレビューを最初に戻します"
         } until ($confirm -match "^[yYnNrR]$")
-        if (($confirm -match "^[rR]$")) {
+        if (($confirm -match "^[rR]$") -and ($ffplay.Count -eq $count)) {
             Stop-Process -Id $ffplay[$ffplay.Count - 1]
         }
     } until ($confirm -match "^[yYnN]$")
@@ -184,10 +187,10 @@ While (1) {
             $minute = $Matches.4
             $second = $Matches.5
             $millisecond = ([string]$Matches.7).PadRight(3,'0').ToInt32()
-            $length = $hour * 3600 + $minute + 60 + $second + $millisecond / 1000
+            $length1 = $hour * 3600 + $minute + 60 + $second + $millisecond / 1000
         }
         $1flength = -1 / $fps
-        $fulllength = $length + 1 / $fps
+        $fulllength = $length1 + 1 / $fps
 
         # 出力ファイル名の指定
         do {
