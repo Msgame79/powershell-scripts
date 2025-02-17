@@ -190,7 +190,7 @@ While (1) {
                 $filename=Read-Host -Prompt "拡張子なしのファイル名(拡張子にはmp4が付きます)"
             } until (-not ($filename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("$PSScriptRoot" + [string]$filename).Length -le 250)
             $flag = $true
-            if (Test-Path ".\$out.mp4") {
+            if ((Test-Path ".\${filename}.mp4") -or (Test-Path ".\${filename}_begin.png") -or (Test-Path ".\${filename}_final.png.mp4")) {
                 do {
                     "上書きしますか?(y/n)"
                     $overwriteconfirm=Read-Host
@@ -202,9 +202,9 @@ While (1) {
         } until ($flag)
 
         #実際に出力
-        ffmpeg -hide_banner -loglevel -8 -f lavfi -i "color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}" -vf "${timertext}" -t $fulllength $vencodingoptions "${filename}.mp4"
+        ffmpeg -y -hide_banner -loglevel -8 -f lavfi -i "color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}" -vf "${timertext}" -t $fulllength $vencodingoptions "${filename}.mp4"
         ffmpeg -hide_banner -loglevel -8 -i "${filename}.mp4" -frames:v 1 "${filename}_begin.png"
-        ffmpeg -hide_banner -loglevel -8 -sseof $1flength -i "${filename}.mp4" "${filename}_final.png"
+        ffmpeg -hide_banner -loglevel -8 -sseof $1flength -i "${filename}.mp4" -frames:v 1 "${filename}_final.png"
         "完成。Enterで最初に戻る"
         Read-Host
     }
