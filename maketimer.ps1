@@ -158,11 +158,16 @@ While (1) {
     # プレビュー
     "プレビューの準備完了。ffplayを終了するにはffplayをフォーカスしてEscやAlt+F4を使用してください"
     $count = $ffplay.Count + 1
-    $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""Preview${count}"" -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
-
-    # 動画作成に入る前の確認
     do {
-        $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN)`nnNを選択すると最初からやりなおします"
+        $ffplay += (Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""Preview${count}"" -f lavfi -i ""color=c=${backgroundcolor}:s=${width}x${height}:r=${fps}"" -vf ""${timertext}""" -NoNewWindow -PassThru).Id
+
+        # 動画作成に入る前の確認
+        do {
+            $confirm = Read-Host -Prompt "これで動画を作成しますか?(yY|nN)`nnNを選択すると最初からやりなおします`nRで現在のプレビューを最初に戻します"
+        } until ($confirm -match "^[yYnNrR]$")
+        if (($confirm -match "^[rR]$")) {
+            Stop-Process -Id $ffplay[$ffplay.Count]
+        }
     } until ($confirm -match "^[yYnN]$")
     if ($confirm -match "^[yY]$") {
         $ffplay | ForEach-Object{
