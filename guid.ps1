@@ -11,18 +11,12 @@ if ($PSVersionTable.PSVersion.Major -le 5) {
     Read-Host
     exit
 }
-if (Test-Path $textfile) {
-    do {
-        Remove-Item $textfile
-    } until (-not (Test-Path $textfile))
-}
 $current = (New-Guid).Guid
 $array += $current
 do {
     Clear-Host
     "" + $array.Count + "${ordinal} GUID"
     "${current}"
-    $current | Out-File $textfile -append
     $current = (New-Guid).Guid
     if ($current -in $array) {
         $isduplicated = 1
