@@ -72,9 +72,9 @@ while (1) {
         $col4 = "│" + $row1[3] + "│" + $row2[3] + "│" + $row3[3] + "│" + $row4[3] +"│" + $row5[3] + "│"
         $col5 = "│" + $row1[4] + "│" + $row2[4] + "│" + $row3[4] + "│" + $row4[4] +"│" + $row5[4] + "│"
         $sheet = "┌──┬──┬──┬──┬──┐`n$col1`n├──┼──┼──┼──┼──┤`n$col2`n├──┼──┼──┼──┼──┤`n$col3`n├──┼──┼──┼──┼──┤`n$col4`n├──┼──┼──┼──┼──┤`n$col5`n└──┴──┴──┴──┴──┘"
-        $sheet
         #0..$_ | ForEach-Object {"No." + (($_ + 1).ToString()).PadLeft(2,' ') + ": " + $numbers[$_]} # 過去の全てを表示
         "No." + (($_ + 1).ToString()).PadLeft(2,' ') + ": " + $numbers[$_] # 現在の1行だけ表示
+        $sheet
         Read-Host
     }
     "Done`nEnter to return"
