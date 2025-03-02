@@ -78,21 +78,22 @@ $ErrorActionPreference = 'Continue'
 # メイン処理
 Set-Location $DefaultDirectory # DefaultDirectoryかPSScriptRootにするのが無難
 versioncheck 5
-While (1) {
+While ($IsWindows) {
     Clear-Host
     # フォントファイルの確認
     if ((Get-ChildItem -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}).Count -eq 1) { # フォント1個
         $fontfile = Get-ChildItem -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}
     } elseif ((Get-ChildItem -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}).Count -ge 2) { # フォント2個以上
-        "Available fonts"
         Get-ChildItem -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}
         do {
-            $fontfile = Read-Host -Prompt "choose a font file"
-        } until (Test-Path ".\$fontfile") 
+            $fontfile = Read-Host -Prompt "フォントを選択してください"
+        } until (Test-Path ".\$fontfile")
     } else { # フォント0個
-        "fontfile does not exist`nenter to exit"
-        Read-Host
-        exit
+        Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}
+        do {
+            $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
+        } until (Test-Path "C:\Windows\Fonts\$fontfile")
+        $fontfile = "C\:/Windows/Fonts/" + $fontfile
     }
 
     "入力する情報`nFPS`n文字の色`n背景の色`n文字サイズ`n背景の幅`n背景の高さ`n文字のx座標`n文字のy座標`n0埋めするか`n動画にするか`n動画時間`n拡張子なしのファイル名`nメモ帳などでパラメータをメモするのをおすすめします"
@@ -220,3 +221,4 @@ While (1) {
         Read-Host
     }
 }
+"Windows以外は実装していませんので諦めてください(MacもLinuxもないからわからん)"
