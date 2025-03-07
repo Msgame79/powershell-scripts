@@ -110,27 +110,25 @@ While ($IsWindows) {
 
     # 文字色の入力
     do {
-        $textcolor = Read-Host -Prompt "文字の色(RGBカラーコードまたは色の名前)"
-    } until ($textcolor -match "^#?[0-9a-fA-F]{6}$" -or $textcolor -in $colors)
-    if ($textcolor -match "^#?([0-9a-fA-F]{6})$") {
-        $textcolor = $Matches[1]
+        $textcolor = Read-Host -Prompt "文字の色(RGB(A)カラーコードまたは色の名前)"
+    } until ($textcolor -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor -in $colors)
+    if ($textcolor -match "^#?([0-9a-fA-F]{6})([0-9a-fA-F]{2})?$") {
+        $textcolor = $Matches[1] + $Matches[2]
     }
 
     # 背景色の入力
     do {
-        $backgroundcolor = Read-Host -Prompt "背景の色(RGBカラーコードまたは色の名前)"
-    } until ($backgroundcolor -match "^#?[0-9a-fA-F]{6}$" -or $backgroundcolor -in $colors)
-    if ($backgroundcolor -match "^#?([0-9a-fA-F]{6})$") {
-        $backgroundcolor = $Matches[1]
+        $backgroundcolor = Read-Host -Prompt "背景の色(RGB(A)カラーコードまたは色の名前)透過すると黒になります"
+    } until ($backgroundcolor -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $backgroundcolor -in $colors)
+    if ($backgroundcolor -match "^#?([0-9a-fA-F]{6})([0-9a-fA-F]{2})?$") {
+        $backgroundcolor = $Matches[1] + $Matches[2]
     }
 
     #文字サイズの指定
-    $ErrorActionPreference = 'SilentlyContinue'
     do {
         $textsizetext = Read-Host -Prompt "文字サイズ(正の整数)"
     } until ($textsizetext -match "\d+" -and ($textsizetext) -ne 0)
     $textsize = $textsizetext
-    $ErrorActionPreference = 'Continue'
 
     #画面サイズの指定
     do {
