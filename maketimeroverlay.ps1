@@ -159,7 +159,7 @@ if ($IsWindows) {
         $dopad = Read-Host -Prompt "1: 0埋めする 2: 0埋めしない"
     } until ($dopad -match "^[12]$")
     if ([int]$dopad - 2 * -1) {# 1を選んだ場合
-        $timertext = "drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:fontcolor=${textcolor}:text='%{eif\:mod(floor(mod(floor(t/3600),60)/24),100)\:u\:2}\:%{eif\:mod(mod(floor(t/3600),60),24)\:u\:2}\:%{eif\:mod(floor(t/60),60)\:u\:2}\:%{eif\:mod(floor(t),60)\:u\:2}.%{eif\:floor(mod(n/${fps},1)*1000)\:u\:3}'"
+        $timertext = ""
     } else {# 2を選んだ場合
         $timertext = ""
     }
