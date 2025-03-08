@@ -54,7 +54,6 @@ VP9(lissless)+Opus(非可逆圧縮だがWebm側が可逆圧縮の音声コーデ
 [string]$fontfile = ""
 [string]$fps = ""
 [string]$textcolor = ""
-[string]$backgroundcolor = ""
 [string]$textsizetext = ""
 [Single]$textsize = 0
 [string]$textxtext = ""
@@ -98,8 +97,11 @@ if ($IsWindows) {
         $inputfilelist
         $inputfilename = Read-Host -Prompt "動画ファイルを選択"
     } until ($inputfilename -in $inputfilelist)
-    $fps = ffprobe -i $inputfilename -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
-    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i $inputfilename -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:fontfile=c\\:/windows/fonts/cour.ttf:y_align=font:text='%{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow
+    $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
+    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:fontfile=c\\:/windows/fonts/cour.ttf:y_align=font:text_align=R:text='%{eif\:ceil(t*${fps})\:u\:0} %{eif\:floor(t/3600)\:u\:2}\:%{eif\:mod(floor(t/60),60)\:u\:2}\:%{eif\:floor(mod(t,60))\:u\:2}.%{eif\:floor(mod(t,1)*1000)\:u\:3}'""" -NoNewWindow
+    <#コマンドメモ
+    ffplay -hide_banner -fs -loop 0 -i output125_1.mp4 -vf "pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:fontfile=c\\:/windows/fonts/cour.ttf:y_align=font:text='%{eif\:ceil(t*$(ffprobe -i output125_1.mp4 -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"))\:u\:0} %{e\:t}':text_align=R"
+    #>
     # フォント選択
     if ((Get-ChildItem -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}).Count -eq 1) { # フォント1個
         $fontfile = Get-ChildItem -Name | Where-Object {$_ -match ".+\.(ttf|otf|ttc)"}
@@ -126,15 +128,6 @@ if ($IsWindows) {
         $textcolor = $Matches[1]
     }
 
-    # 背景色の入力
-    do {
-        Clear-Host
-        $backgroundcolor = Read-Host -Prompt "背景の色(RGB(A)カラーコードまたは色の名前)Aを00にするとRGBがどんな色でも透過できます"
-    } until ($backgroundcolor -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $backgroundcolor -in $colors)
-    if ($backgroundcolor -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
-        $backgroundcolor = $Matches[1]
-    }
-
     #文字サイズの指定
     do {
         do {
@@ -159,7 +152,7 @@ if ($IsWindows) {
         $dopad = Read-Host -Prompt "1: 0埋めする 2: 0埋めしない"
     } until ($dopad -match "^[12]$")
     if ([int]$dopad - 2 * -1) {# 1を選んだ場合
-        $timertext = "drawtext=x=${textx}:y=${texty}:fontfile='${fontfile}':fontsize=${textsize}:fontcolor=${textcolor}:text='%{eif\:mod(floor(mod(floor(t/3600),60)/24),100)\:u\:2}\:%{eif\:mod(mod(floor(t/3600),60),24)\:u\:2}\:%{eif\:mod(floor(t/60),60)\:u\:2}\:%{eif\:mod(floor(t),60)\:u\:2}.%{eif\:floor(mod(n/${fps},1)*1000)\:u\:3}'"
+        $timertext = ""
     } else {# 2を選んだ場合
         $timertext = ""
     }
