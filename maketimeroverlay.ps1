@@ -1,5 +1,5 @@
 chcp 65001
-$ErrorActionPreference = 'Continue'
+$ErrorActionPreference = 'SilentlyContinue'
 <#
 このps1ファイルはバージョン6以降で動作します。versioncheckが使用できないのでここに書きますがPowerShellのバージョン6以降をGitHubかMSStoreより入手してください。
 URL: https://github.com/PowerShell/PowerShell/releases/latest
