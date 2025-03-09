@@ -4,13 +4,13 @@ $ErrorActionPreference = 'SilentlyContinue'
 このps1ファイルはバージョン6以降で動作します。versioncheckが使用できないのでここに書きますがPowerShellのバージョン6以降をGitHubかMSStoreより入手してください。
 URL: https://github.com/PowerShell/PowerShell/releases/latest
 
-可変フォントしかない場合はweightを指定してstaticフォントにする場合
+可変フォントしかない場合はweightを指定してstaticフォントにする
 必要なもの
 Python 3.13
 fonttools package
 install: pip install fonttools
 コマンド
-fonttools varLib.mutator font.ttf wght=400
+fonttools varLib.mutator filename.ttf wght=value
 #>
 
 # 変数一覧(変更可能)
