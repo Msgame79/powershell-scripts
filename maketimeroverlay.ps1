@@ -21,13 +21,13 @@ fonttools varLib.mutator filename.ttf wght=value
 <#
 目的別いろんなエンコードメモ
 再生できればいいからとにかく容量を小さくしたい場合
-hevc+Opus,mkv Container
+hevc+Opus,mkv Container(環境によるかも)
 [string]$vencodesetting = "-c:v libx265 -qp 18"
 [string]$aencodesetting = "-c:a libopus -b:a 96k"
 [string]$outputextension = "mkv"
 
 互換性が欲しい場合
-h264+aac, mp4 container
+h264+aac, mp4 container(伝統的な組み合わせで大抵のデバイスで再生可能)
 [string]$vencodesetting = "-c:v libx264 -qp 18"
 [string]$aencodesetting = "-c:a aac -q:a 1"
 [string]$outputextension = "mp4"
@@ -37,7 +37,7 @@ VP9+Opus, webm container
 [string]$outputextension = "webm"
 
 可逆圧縮したい場合
-h264(lossless)+alac, mp4 container
+h264(lossless)+alac, mp4 container(mp4で可逆圧縮したい場合。flacはmp4コンテナに入らない)
 [string]$vencodesetting = "-c:v libx264 -qp 0"
 [string]$aencodesetting = "-c:a flac"
 [string]$outputextension = "mp4"
@@ -45,7 +45,7 @@ utvideo+flac, mkv container (ファイルサイズがでかくなる)
 [string]$vencodesetting = "-c:v utvideo"
 [string]$aencodesetting = "-c:a flac"
 [string]$outputextension = "mkv"
-ffv1+flac, mkv container
+ffv1+flac, mkv container(ファイルの保存に一番向いている)
 [string]$vencodesetting = "-c:v ffv1 -level 3"
 [string]$aencodesetting = "-c:a flac"
 [string]$outputextension = "mkv"
