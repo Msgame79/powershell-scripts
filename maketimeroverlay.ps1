@@ -1,5 +1,5 @@
 chcp 65001
-$ErrorActionPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Continue'
 <#
 このps1ファイルはバージョン6以降で動作します。versioncheckが使用できないのでここに書きますがPowerShellのバージョン6以降をGitHubかMSStoreより入手してください。
 URL: https://github.com/PowerShell/PowerShell/releases/latest
@@ -71,6 +71,14 @@ VP9(lissless)+Opus(非可逆圧縮だがWebm側が可逆圧縮の音声コーデ
 [string]$startat = ""
 [Single]$duration = 0
 [string]$timertext = ""
+[string]$millisecond = ""
+[string]$second = ""
+[string]$minute = ""
+[string]$hour = ""
+[string]$hourpad = ""
+[string]$confirm = ""
+[string]$outputfilename = ""
+[System.Object]$encodinglength = $null
 
 ffmpeg -version | Out-Null
 if (-not $?) {
@@ -96,7 +104,7 @@ if (-not $?) {
 if ($IsWindows) {
     Set-Location $defaultfolder
     # 動画選択
-    $inputfilelist = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(mp4|mov|mkv|avi|webm|mpg|flv|wmv|ogv|asf)$"}
+    $inputfilelist = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(mp4|mov|mkv|avi|webm|mpg|flv|wmv|ogv|asf)$"} | Where-Object {$_}
     if ($inputfilelist.Count -eq 0) {
        "動画ファイルが${defaultfolder}で見つかりません`nEnterで終了"
        Read-Host
@@ -109,29 +117,7 @@ if ($IsWindows) {
     } until ($inputfilename -in $inputfilelist)
     $logtext += "入力ファイル: ${inputfilename}"
     $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
-    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow
-    # フォント選択
-    if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
-        $fontfile = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
-        $logtext += "フォント: ${defaultfolder}\${fontfile}"
-    } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
-        do {
-            Clear-Host
-            $logtext
-            Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
-            $fontfile = Read-Host -Prompt "フォントを選択してください"
-        } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
-        $logtext += "フォント: ${defaultfolder}\${fontfile}"
-    } else { # フォント0個
-        do {
-            Clear-Host
-            $logtext
-            Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
-            $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
-        } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
-        $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
-        $fontfile = "C\\:/Windows/Fonts/${fontfile}"
-    }
+    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow -Wait
 
     # モード選択
     do {
@@ -140,85 +126,189 @@ if ($IsWindows) {
         $mode = Read-Host -Prompt "1:ILs 2:Full-Game"
     } until ($mode -match "^[12]$")
 
-    if (([int]$mode - 2) * -1) { # ILs
-        $logtext += "モード: ILs"
-        # 文字色の入力
+    if ($mode -match "^1$") { # ILs
         do {
-            Clear-Host
-            $logtext
-            $textcolor = Read-Host -Prompt "文字の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
-        } until ($textcolor -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor -in $colors)
-        if ($textcolor -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
-            $textcolor = $Matches[1]
-        }
-        $logtext += "文字色: ${textcolor}"
+            $logtext += "モード: ILs"
+            # フォント選択
+            if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
+                $fontfile = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                $logtext += "フォント: ${defaultfolder}\${fontfile}"
+            } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
+                do {
+                    Clear-Host
+                    $logtext
+                    Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                    $fontfile = Read-Host -Prompt "フォントを選択してください"
+                } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+                $fontfile | Out-File -FilePath option.txt -Force
+                $logtext += "フォント: ${defaultfolder}\${fontfile}"
+            } else { # フォント0個
+                do {
+                    Clear-Host
+                    $logtext
+                    Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                    $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
+                } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+                $fontfile | Out-File -FilePath option.txt -Force
+                $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
+                $fontfile = "C\\:/Windows/Fonts/${fontfile}"
+            }
+            # 文字色の入力
+            do {
+                Clear-Host
+                $logtext
+                $textcolor = Read-Host -Prompt "文字の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+            } until ($textcolor -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor -in $colors)
+            $textcolor | Out-File -FilePath option.txt -Append
+            if ($textcolor -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+                $textcolor = $Matches[1]
+            }
+            $logtext += "文字色: ${textcolor}"
 
-        # 文字サイズの指定
+            # 文字サイズの指定
+            do {
+                Clear-Host
+                $logtext
+                $textsize = Read-Host -Prompt "文字サイズ(0以上の整数)"
+            } until ($textsize -match "^[1-9]\d*$") # 1以上の整数
+            $textsize | Out-File -FilePath option.txt -Append
+            $logtext += "文字サイズ: ${textsize}"
+
+            # 文字座標の指定
+            do {
+                Clear-Host
+                $logtext
+                $textx = Read-Host -Prompt "文字のx座標(正負の整数)"
+            } until ($textx -match "^-?\d+$")
+            $textx | Out-File -FilePath option.txt -Append
+            $logtext += "文字x座標: ${textx}"
+            do {
+                Clear-Host
+                $logtext
+                $texty = Read-Host -Prompt "文字のy座標(正負の整数)"
+            } until ($texty -match "^-?\d+$")
+            $texty | Out-File -FilePath option.txt -Append
+            $logtext += "文字y座標: ${texty}"
+
+            # 表示フレーム
+            do {
+                do {
+                    Clear-Host
+                    $logtext
+                    $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
+                } until ($appearat -match "^(0|[1-9]\d*)$")
+            } until ([int]$appearat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 3)
+            $appearat | Out-File -FilePath option.txt -Append
+            $logtext += "表示フレーム: ${appearat}"
+
+            # 開始フレーム
+            do {
+                do {
+                    Clear-Host
+                    $logtext
+                    $startat = Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
+                } until ($startat -match "^(0|[1-9]\d*)$")
+            } until ([int]$startat -ge [int]$appearat -and [int]$startat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 2)
+            $startat | Out-File -FilePath option.txt -Append
+            $logtext += "開始フレーム: ${startat}"
+
+            # 停止フレーム
+            do {
+                do {
+                    Clear-Host
+                    $logtext
+                    $stopat = Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
+                } until ($stopat -match "^(0|[1-9]\d*)$")
+            } until ([int]$stopat -gt [int]$startat -and [int]$stopat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 1)
+            $stopat | Out-File -FilePath option.txt -Append
+            $logtext += "停止フレーム: ${stopat}"
+
+            # 非表示フレーム
+            do {
+                do {
+                    Clear-Host
+                    $logtext
+                    $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
+                } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
+            } until (([int]$disappearat -gt [int]$stopat -and [int]$disappearat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames")) -or $disappearat -match "^-1$")
+            $disappearat | Out-File -FilePath option.txt -Append
+            if ($disappearat -match "^-1$") {
+                $disappearat = [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames")
+            }
+            $logtext += "非表示フレーム: ${disappearat}"
+
+            $duration = [Math]::Round(([int]$stopat - [int]$startat) / ($fps | Invoke-Expression), 3, 1)
+            $hour = ([Math]::Floor($duration / 3600))
+            $minute = (([Math]::Floor(($duration % 3600) / 60)).ToString()).PadLeft(2,'0')
+            $second = (([Math]::Floor(($duration % 60))).ToString()).PadLeft(2,'0')
+            $millisecond = (([Math]::Round(($duration % 1)*1000,0,1)).ToString()).PadLeft(3,'0')
+            if ([Math]::Floor($duration / 10) -eq 0) { # 10秒未満
+                $second = [Math]::Floor(($duration % 60))
+                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='0.000':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),${startat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='%{eif\:floor(t-(${startat}/${fps}))\:d}.%{eif\:mod(round((t-${startat}/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),${startat})*lt(ceil(t*${fps}),${stopat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='${second}.${millisecond}':enable='gte(ceil(t*${fps}),${stopat})*lt(ceil(t*${fps}),${disappearat})'"
+            } elseif ([Math]::Floor($duration / 10) -le 5) { # 10秒以上1分未満
+                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='00.000':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),${startat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='%{eif\:floor(t-(${startat}/${fps}))\:d\:2}.%{eif\:mod(round((t-${startat}/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),${startat})*lt(ceil(t*${fps}),${stopat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='${second}.${millisecond}':enable='gte(ceil(t*${fps}),${stopat})*lt(ceil(t*${fps}),${disappearat})'"
+            } elseif ([Math]::Floor($duration / 10) -le 59) { # 1分以上10分未満
+                $minute = [Math]::Floor(($duration % 3600) / 60)
+                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='0\:00.000':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),${startat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='%{eif\:floor(mod(floor(t-(${startat}/${fps})),3600)/60)\:d}\:%{eif\:mod(floor(t-(${startat}/${fps})),60)\:d\:2}.%{eif\:mod(round((t-${startat}/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),${startat})*lt(ceil(t*${fps}),${stopat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='${minute}\:${second}.${millisecond}':enable='gte(ceil(t*${fps}),${stopat})*lt(ceil(t*${fps}),${disappearat})'"
+            } elseif ([Math]::Floor($duration / 10) -le 359) { # 10分以上1時間未満
+                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='00\:00.000':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),${startat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='%{eif\:floor(mod(floor(t-(${startat}/${fps})),3600)/60)\:d\:2}\:%{eif\:mod(floor(t-(${startat}/${fps})),60)\:d\:2}.%{eif\:mod(round((t-${startat}/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),${startat})*lt(ceil(t*${fps}),${stopat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='${minute}\:${second}.${millisecond}':enable='gte(ceil(t*${fps}),${stopat})*lt(ceil(t*${fps}),${disappearat})'"
+            } else { # 1時間以上
+                $hourpad = ("").PadLeft($hour.Length,'0')
+                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='${hourpad}\:00\:00.000':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),${startat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='%{eif\:floor((t-(${startat}/${fps}))/3600)\:d\:$($hour.Length)}\:%{eif\:floor(mod(floor(t-(${startat}/${fps})),3600)/60)\:d\:2}\:%{eif\:mod(floor(t-(${startat}/${fps})),60)\:d\:2}.%{eif\:mod(round((t-${startat}/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),${startat})*lt(ceil(t*${fps}),${stopat})',drawtext=fontfile=${fontfile}:fontcolor=${textcolor}:fontcolor=${textcolor}:fontsize=${textsize}:x=${textx}:y=${texty}:text='${hour}\:${minute}\:${second}.${millisecond}':enable='gte(ceil(t*${fps}),${stopat})*lt(ceil(t*${fps}),${disappearat})'"
+            }
+            Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
+            do {
+                Clear-Host
+                $logtext
+                $confirm = Read-Host -Prompt "これで動画を作成しますか?(yn)`nNを選ぶとフォント選択に戻ります`nこれまでの入力はoption.txtに自動で保存されています"
+            } until ($confirm -match "^[YyNn]$")
+            if ($confirm -match "^[nN]$") {
+                $logtext = @()
+                $logtext += "入力ファイル: ${inputfilename}"
+            }
+        } until ($confirm -match "^[yY]$")
+        $confirm = ""
         do {
-            Clear-Host
-            $logtext
-            $textsize = Read-Host -Prompt "文字サイズ(0以上の整数)"
-        } until ($textsize -match "^[1-9]\d*$") # 1以上の整数
-        $logtext += "文字サイズ: ${textsize}"
-
-        # 文字座標の指定
-        do {
-            Clear-Host
-            $logtext
-            $textx = Read-Host -Prompt "文字のx座標(正負の整数)"
-        } until ($textx -match "^-?\d+$")
-        $logtext += "文字x座標: ${textx}"
-        do {
-            Clear-Host
-            $logtext
-            $texty = Read-Host -Prompt "文字のy座標(正負の整数)"
-        } until ($texty -match "^-?\d+$")
-        $logtext += "文字y座標: ${texty}"
-
-        # 表示開始のフレーム
-        do {
-            Clear-Host
-            $logtext
-            $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)"
-        } until ($appearat -match "^(0|[1-9]\d*)$")
-        $logtext += "表示フレーム: ${appearat}"
-
-        # 開始フレーム
-        do {
-            Clear-Host
-            $logtext
-            $startat = Read-Host -Prompt "タイマーを始めるフレーム(直前のフリーズから動き出したフレーム)"
-        } until ($startat -match "^(0|[1-9]\d*)$" -and [int]$startat -ge [int]$appearat)
-        $logtext += "開始フレーム: ${startat}"
-
-        # 停止フレーム
-        do {
-            Clear-Host
-            $logtext
-            $stopat = Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
-        } until ($stopat -match "^(0|[1-9]\d*)$" -and [int]$stopat -ge [int]$startat)
-        $logtext += "停止フレーム: ${stopat}"
-
-        # 停止フレーム
-        do {
-            Clear-Host
-            $logtext
-            $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後まで表示します"
-        } until (($disappearat -match "^(0|[1-9]\d*)$" -and [int]$disappearat -gt [int]$stopat) -or $disappearat -match "^-1$")
-        if ($disappearat -match "^-1$") {
-            $disappearat = [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 1
-        }
-        $logtext += "非表示フレーム: ${disappearat}"
-
-        $duration = [Math]::Round(([int]$stopat - [int]$startat) / $fps, 3, 1)
-
-        switch ([Math]::Floor($duration / 10)) {
-            0 {$timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor}"}
-        }
-
-
+            do {
+                Clear-Host
+                $logtext
+                $outputfilename=Read-Host -Prompt "拡張子なしのファイル名(拡張子には${outputextension}が付きます)"
+            } until (-not ($outputfilename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("${defaultfolder}${filename}").Length -le 250)
+            if ((Test-Path "${defaultfolder}\${outputfilename}.${outputextension}")) {
+                do {
+                    Clear-Host
+                    $logtext
+                    Write-Host "現在のファイル名: ${defaultfolder}\${outputfilename}.${outputextension}"
+                    $confirm=Read-Host -Prompt "ファイルが既に存在します。上書きしますか?(yn)"
+                } until ($confirm -match "^[yYnN]$")
+            }
+        } until (-not (Test-Path "${defaultfolder}\${outputfilename}.${outputextension}") -or $confirm -match "^[yY]$")
+        $encodinglength = Measure-Command -Expression {ffmpeg -hide_banner -loglevel -8 -y -i "${inputfilename}" -vf "${timertext}" $vencodesetting $aencodesetting "${defaultfolder}\${outputfilename}.${outputextension}"}
+        Write-Host "Encoded ${defaultfolder}\${outputfilename}.${outputextension} in $((($encodinglength.Hours).ToString()).PadLeft(2,'0')):$((($encodinglength.Minutes).ToString()).PadLeft(2,'0')):$((($encodinglength.Seconds).ToString()).PadLeft(2,'0')).$((($encodinglength.Milliseconds).ToString()).PadLeft(3,'0'))"
     } else { # Full-Game
         $logtext += "モード: Full-Game"
+        # フォント選択
+        if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
+            $fontfile = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+            $logtext += "フォント: ${defaultfolder}\${fontfile}"
+        } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
+            do {
+                Clear-Host
+                $logtext
+                Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                $fontfile = Read-Host -Prompt "フォントを選択してください"
+            } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+            $logtext += "フォント: ${defaultfolder}\${fontfile}"
+        } else { # フォント0個
+            do {
+                Clear-Host
+                $logtext
+                Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
+            } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+            $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
+            $fontfile = "C\\:/Windows/Fonts/${fontfile}"
+        }
     }
 } else {
     Write-Host "現在このps1ファイルはWindowsでのみ動作します`nEnterで終了"
