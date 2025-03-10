@@ -15,7 +15,7 @@ fonttools varLib.mutator filename.ttf wght=value
 
 # 変数一覧(変更可能)
 [string]$defaultfolder = "$PSScriptRoot\av1test" # デフォルト: $PSScriptRoot
-[string]$vencodesetting = "-c:v h264_nvenc -qp 18" # デフォルト: "-c:v libx264 -qp 21" フィルターをかけるので"-c:v copy"は使えない
+[string]$vencodesetting = "-c:v h264_nvenc -qmin 18 -qmax 21" # デフォルト: "-c:v libx264 -qp 21" フィルターをかけるので"-c:v copy"は使えない
 [string]$aencodesetting = "-c:a copy" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
 [string]$outputextension = "mp4" # デフォルト: "mp4" デフォルトがmp4向けのエンコード設定のため。ただし上のエンコード設定によっては変える必要あり、あとここで編集させているのはすぐ上にエンコード設定があるから
 <#
@@ -79,6 +79,31 @@ VP9(lissless)+Opus(非可逆圧縮だがWebm側が可逆圧縮の音声コーデ
 [string]$confirm = ""
 [string]$outputfilename = ""
 [System.Object]$encodinglength = $null
+[string]$row1 = ""
+[string]$row2 = ""
+[string]$row3 = ""
+[string]$textcolor1 = ""
+[string]$textsize1 = ""
+[string]$textcolor2 = ""
+[string]$textsize2 = ""
+[string]$textcolor3 = ""
+[string]$textsize3 = ""
+[string]$linespace1 = ""
+[string]$linespace2 = ""
+[array]$starts = @()
+[array]$stops = @()
+[uint]$counter = 0
+[int]$isend = 0
+[int]$videoframes = 0
+[int]$flag1 = 0
+[Single]$rt = 0
+[int]$gtframes1 = 0
+[array]$rtframes = @()
+[array]$gtframes = @()
+[array]$stframes = @()
+[array]$sts = @()
+[array]$gts = @()
+[array]$rts = @()
 
 ffmpeg -version | Out-Null
 if (-not $?) {
@@ -117,6 +142,7 @@ if ($IsWindows) {
     } until ($inputfilename -in $inputfilelist)
     $logtext += "入力ファイル: ${inputfilename}"
     $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
+    $videoframes = ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames"
     Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow -Wait
 
     # モード選択
@@ -169,7 +195,7 @@ if ($IsWindows) {
             do {
                 Clear-Host
                 $logtext
-                $textsize = Read-Host -Prompt "文字サイズ(0以上の整数)"
+                $textsize = Read-Host -Prompt "文字サイズ(1以上の整数)"
             } until ($textsize -match "^[1-9]\d*$") # 1以上の整数
             $textsize | Out-File -FilePath option.txt -Append
             $logtext += "文字サイズ: ${textsize}"
@@ -179,14 +205,14 @@ if ($IsWindows) {
                 Clear-Host
                 $logtext
                 $textx = Read-Host -Prompt "文字のx座標(正負の整数)"
-            } until ($textx -match "^-?\d+$")
+            } until ($textx -match "^(0|-?[1-9]\d*)$")
             $textx | Out-File -FilePath option.txt -Append
             $logtext += "文字x座標: ${textx}"
             do {
                 Clear-Host
                 $logtext
                 $texty = Read-Host -Prompt "文字のy座標(正負の整数)"
-            } until ($texty -match "^-?\d+$")
+            } until ($texty -match "^(0|-?[1-9]\d*)$")
             $texty | Out-File -FilePath option.txt -Append
             $logtext += "文字y座標: ${texty}"
 
@@ -197,7 +223,7 @@ if ($IsWindows) {
                     $logtext
                     $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
                 } until ($appearat -match "^(0|[1-9]\d*)$")
-            } until ([int]$appearat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 3)
+            } until ([int]$appearat -le $videoframes - 3)
             $appearat | Out-File -FilePath option.txt -Append
             $logtext += "表示フレーム: ${appearat}"
 
@@ -207,8 +233,8 @@ if ($IsWindows) {
                     Clear-Host
                     $logtext
                     $startat = Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
-                } until ($startat -match "^(0|[1-9]\d*)$")
-            } until ([int]$startat -ge [int]$appearat -and [int]$startat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 2)
+                } until ($startat -match "^([1-9]\d*)$")
+            } until ([int]$startat -ge [int]$appearat -and [int]$startat -le $videoframes - 2)
             $startat | Out-File -FilePath option.txt -Append
             $logtext += "開始フレーム: ${startat}"
 
@@ -219,7 +245,7 @@ if ($IsWindows) {
                     $logtext
                     $stopat = Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
                 } until ($stopat -match "^(0|[1-9]\d*)$")
-            } until ([int]$stopat -gt [int]$startat -and [int]$stopat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames") - 1)
+            } until ([int]$stopat -gt [int]$startat -and [int]$stopat -le $videoframes - 1)
             $stopat | Out-File -FilePath option.txt -Append
             $logtext += "停止フレーム: ${stopat}"
 
@@ -230,10 +256,10 @@ if ($IsWindows) {
                     $logtext
                     $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
                 } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
-            } until (([int]$disappearat -gt [int]$stopat -and [int]$disappearat -le [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames")) -or $disappearat -match "^-1$")
+            } until (([int]$disappearat -gt [int]$stopat -and [int]$disappearat -le $videoframes) -or $disappearat -match "^-1$")
             $disappearat | Out-File -FilePath option.txt -Append
             if ($disappearat -match "^-1$") {
-                $disappearat = [int](ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames")
+                $disappearat = $videoframes
             }
             $logtext += "非表示フレーム: ${disappearat}"
 
@@ -273,7 +299,7 @@ if ($IsWindows) {
                 Clear-Host
                 $logtext
                 $outputfilename=Read-Host -Prompt "拡張子なしのファイル名(拡張子には${outputextension}が付きます)"
-            } until (-not ($outputfilename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("${defaultfolder}${filename}").Length -le 250)
+            } until (-not ($outputfilename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("${defaultfolder}\${filename}").Length -le 250)
             if ((Test-Path "${defaultfolder}\${outputfilename}.${outputextension}")) {
                 do {
                     Clear-Host
@@ -283,10 +309,73 @@ if ($IsWindows) {
                 } until ($confirm -match "^[yYnN]$")
             }
         } until (-not (Test-Path "${defaultfolder}\${outputfilename}.${outputextension}") -or $confirm -match "^[yY]$")
-        $encodinglength = Measure-Command -Expression {ffmpeg -hide_banner -loglevel -8 -y -i "${inputfilename}" -vf "${timertext}" $vencodesetting $aencodesetting "${defaultfolder}\${outputfilename}.${outputextension}"}
-        Write-Host "Encoded ${defaultfolder}\${outputfilename}.${outputextension} in $((($encodinglength.Hours).ToString()).PadLeft(2,'0')):$((($encodinglength.Minutes).ToString()).PadLeft(2,'0')):$((($encodinglength.Seconds).ToString()).PadLeft(2,'0')).$((($encodinglength.Milliseconds).ToString()).PadLeft(3,'0'))"
+        $encodinglength = Measure-Command -Expression {
+            Start-Process -FilePath "ffmpeg" -ArgumentList "-hide_banner -loglevel -8 -y -i ""${inputfilename}"" -vf ""${timertext}"" ${vencodesetting} ${aencodesetting} ""${defaultfolder}\${outputfilename}.${outputextension}""" -Wait -NoNewWindow
+        }
+        Write-Host "${defaultfolder}\${outputfilename}.${outputextension}は$((($encodinglength.Hours).ToString()).PadLeft(2,'0')):$((($encodinglength.Minutes).ToString()).PadLeft(2,'0')):$((($encodinglength.Seconds).ToString()).PadLeft(2,'0')).$((($encodinglength.Milliseconds).ToString()).PadLeft(3,'0'))でエンコードしました`nEnterで終了"
+        Read-Host
+        exit
     } else { # Full-Game
         $logtext += "モード: Full-Game"
+        do {
+            Clear-Host
+            $logtext
+            $row1 = Read-Host -Prompt "1行目`n1:GT 2:RT 3:ST"
+        } until ($row1 -match "^[123]$")
+        switch  ([int]$row1) {
+            1 {
+                $logtext += "1行目: GT"
+                do {
+                    Clear-Host
+                    $logtext        
+                    $row2 = Read-Host -Prompt "2行目`n2:RT 3:ST"
+                } until ($row2 -match "^[23]$")
+                if ($row2 -match "^2$") { # 123
+                    $row3 = "3"
+                    $logtext += "2行目: RT"
+                    $logtext += "3行目: ST"
+                } else { # 132
+                    $row3 = "2"
+                    $logtext += "2行目: ST"
+                    $logtext += "3行目: RT"
+                }
+            }
+            2 {
+                $logtext += "1行目: RT"
+                do {
+                    Clear-Host
+                    $logtext        
+                    $row2 = Read-Host -Prompt "2行目`n1:GT 3:ST"
+                } until ($row2 -match "^[13]$")
+                if ($row2 -match "^1$") { # 213
+                    $row3 = "3"
+                    $logtext += "2行目: GT"
+                    $logtext += "3行目: ST"
+                } else { # 231
+                    $row3 = "1"
+                    $logtext += "2行目: ST"
+                    $logtext += "3行目: GT"
+                }
+            }
+            3 {
+                $logtext += "1行目: ST"
+                do {
+                    Clear-Host
+                    $logtext        
+                    $row2 = Read-Host -Prompt "2行目`n1:GT 2:RT"
+                } until ($row2 -match "^[12]$")
+                if ($row2 -match "^1$") { # 312
+                    $row3 = "2"
+                    $logtext += "2行目: GT"
+                    $logtext += "3行目: RT"
+                } else { # 321
+                    $row3 = "1"
+                    $logtext += "2行目: RT"
+                    $logtext += "3行目: GT"
+                }
+            }
+        }
+
         # フォント選択
         if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
             $fontfile = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
@@ -298,6 +387,7 @@ if ($IsWindows) {
                 Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                 $fontfile = Read-Host -Prompt "フォントを選択してください"
             } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+            $fontfile | Out-File -FilePath option.txt -Force
             $logtext += "フォント: ${defaultfolder}\${fontfile}"
         } else { # フォント0個
             do {
@@ -306,8 +396,229 @@ if ($IsWindows) {
                 Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                 $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
             } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+            $fontfile | Out-File -FilePath option.txt -Force
             $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
             $fontfile = "C\\:/Windows/Fonts/${fontfile}"
+        }
+
+        # 文字色の入力1
+        do {
+            Clear-Host
+            $logtext
+            $textcolor1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+        } until ($textcolor1 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor1 -in $colors)
+        $textcolor1 | Out-File -FilePath option.txt -Append
+        if ($textcolor1 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+            $textcolor1 = $Matches[1]
+        }
+        $logtext += "文字色(1行目): ${textcolor1}"
+        # 文字サイズの指定1
+        do {
+            Clear-Host
+            $logtext
+            $textsize1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の文字サイズ(1以上の整数)"
+        } until ($textsize1 -match "^[1-9]\d*$") # 1以上の整数
+        $textsize1 | Out-File -FilePath option.txt -Append
+        $logtext += "文字サイズ(1行目): ${textsize1}"
+        # 文字色の入力2
+        do {
+            Clear-Host
+            $logtext
+            $textcolor2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+        } until ($textcolor2 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor2 -in $colors)
+        $textcolor2 | Out-File -FilePath option.txt -Append
+        if ($textcolor2 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+            $textcolor2 = $Matches[1]
+        }
+        $logtext += "文字色(2行目): ${textcolor2}"
+        # 文字サイズの指定2
+        do {
+            Clear-Host
+            $logtext
+            $textsize2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の文字サイズ(1以上の整数)"
+        } until ($textsize2 -match "^[1-9]\d*$") # 1以上の整数
+        $textsize2 | Out-File -FilePath option.txt -Append
+        $logtext += "文字サイズ(2行目): ${textsize2}"
+        # 文字色の入力3
+        do {
+            Clear-Host
+            $logtext
+            $textcolor3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+        } until ($textcolor3 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor3 -in $colors)
+        $textcolor3 | Out-File -FilePath option.txt -Append
+        if ($textcolor3 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+            $textcolor3 = $Matches[1]
+        }
+        $logtext += "文字色(3行目): ${textcolor3}"
+        # 文字サイズの指定3
+        do {
+            Clear-Host
+            $logtext
+            $textsize3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の文字サイズ(1以上の整数)"
+        } until ($textsize3 -match "^[1-9]\d*$") # 1以上の整数
+        $textsize3 | Out-File -FilePath option.txt -Append
+        $logtext += "文字サイズ(3行目): ${textsize3}"
+
+        # 文字座標の指定
+        do {
+            Clear-Host
+            $logtext
+            $textx = Read-Host -Prompt "文字のx座標(正負の整数)1行目の左が基準になります"
+        } until ($textx -match "^(0|-?[1-9]\d*)$")
+        $textx | Out-File -FilePath option.txt -Append
+        $logtext += "文字x座標: ${textx}"
+        do {
+            Clear-Host
+            $logtext
+            $texty = Read-Host -Prompt "文字のy座標(正負の整数)1行目の上が基準になります"
+        } until ($texty -match "^(0|-?[1-9]\d*)$")
+        $texty | Out-File -FilePath option.txt -Append
+        $logtext += "文字y座標: ${texty}"
+
+        # 行間の指定1
+        do {
+            Clear-Host
+            $logtext
+            $linespace1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))と2行目($($logtext[3].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
+        } until ($linespace1 -match "^(0|-?[1-9]\d*)$")
+        $linespace1 | Out-File option.txt -Append
+        $logtext += "行間1: ${linespace1}"
+        # 行間の指定2
+        do {
+            Clear-Host
+            $logtext
+            $linespace2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))と3行目($($logtext[4].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
+        } until ($linespace2 -match "^(0|-?[1-9]\d*)$")
+        $linespace2 | Out-File option.txt -Append
+        $logtext += "行間2: ${linespace2}"
+
+
+
+        # いよいよタイマーを作っていく
+        # 表示フレーム
+        do {
+            do {
+                Clear-Host
+                $logtext
+                $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
+            } until ($appearat -match "^(0|[1-9]\d*)$")
+        } until ([int]$appearat -le $videoframes)
+        $appearat | Out-File -FilePath option.txt -Append
+        $logtext += "表示フレーム: ${appearat}"
+        $counter = 1
+        do {
+            if ($counter -eq 1) {
+                $logtext = $logtext[0..15]
+                do {
+                    do {
+                        $starts = @()
+                        Clear-Host
+                        $logtext
+                        $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
+                    } until ($starts[0] -match "^([1-9]\d*)$")
+                } until (v -le $videoframes)
+                $logtext += "開始フレーム1: $($starts[0])"
+                do {
+                    do {
+                        $stops = @()
+                        Clear-Host
+                        $logtext
+                        $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
+                    } until ($stops[0] -match "^([1-9]\d*)$")
+                } until ([int]$stops[0] -le $videoframes -and [int]$stops[0] -gt [int]$starts[0])
+                $logtext += "停止フレーム1: $($starts[0])"
+                $counter += 1
+            } else {
+                do {
+                    $starts = @($starts[0..($counter - 2)])
+                    Clear-Host
+                    $logtext
+                    $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)`n$(if ($counter -ge 3) {"endで終了、"})undoで1つ戻る"
+                } until ($starts[-1] -match "^([1-9]\d*|end|undo)$")
+                switch ($starts[-1]) {
+                    "end" {
+                        if ($counter -ge 3) {
+                            $isend = 1
+                            $starts = $starts[0..($starts.Count - 2)]
+                        }
+                    }
+                    "undo" {
+                        $counter -= 1
+                    }
+                    default {
+                        if ([int]$starts[-1] -gt [int]$stops[-1]) {
+                            $logtext += "開始フレーム$($counter): $($starts[0])"
+                            $flag1 = 0
+                            do {
+                                do {
+                                    $stops = @($stops[0..($counter - 2)])
+                                    Clear-Host
+                                    $logtext
+                                    $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)`ncancelで開始フレームに戻る"
+                                } until ($stops[-1] -match "^([1-9]\d*|cancel)$")
+                                switch ($stops[-1]) {
+                                    "cancel" {
+                                        $stops = @($starts[0..($counter - 2)])
+                                        $flag1 = 1
+                                    }
+                                    default {
+                                        if ([int]$stops[-1] -gt [int]$starts[-1]) {
+                                            $logtext += "停止フレーム$($counter): $($starts[0])"
+                                            $counter += 1
+                                            $flag1 = 1
+                                        }
+                                    }
+                                }
+                            } until ($flag1)
+                        }
+                    }
+                }
+                $logtext = $logtext[0..15]
+                1..$counter | ForEach-Object {
+                    $logtext += "開始フレーム${_}: $($starts[($_ - 1)])"
+                    $logtext += "停止フレーム${_}: $($stops[($_ - 1)])"
+                }
+            }
+        } until ($isend)
+        0..($starts.Count - 1) | ForEach-Object {
+            $starts[$_] | Out-File -FilePath option.txt -Append
+            $stops[$_] | Out-File -FilePath option.txt -Append
+        }
+
+        # 非表示フレーム
+        do {
+            do {
+                Clear-Host
+                $logtext
+                $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
+            } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
+        } until (([int]$disappearat -gt [int]$stops[-1] -and [int]$disappearat -le $videoframes) -or $disappearat -match "^-1$")
+        $disappearat | Out-File -FilePath option.txt -Append
+        if ($disappearat -match "^-1$") {
+            $disappearat = $videoframes
+        }
+        $logtext += "非表示フレーム: ${disappearat}"
+
+        0..($starts.Count - 1) | ForEach-Object {
+            $stframes += [int]$stops[$_] - [int]$starts[$_]
+            $gtframes1 += $stframes[-1]
+            $gtframes += $gtframes1
+            $rtframes += [int]$stops[$_] - [int]$starts[0]
+        }
+        $sts = $stframes | ForEach-Object {
+            [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+        }
+        $gts = $gtframes | ForEach-Object {
+            [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+        }
+        $rts = $rtframes | ForEach-Object {
+            [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+        }
+        if ([Math]::Floor($rts[-1] / 10) -eq 0) { # 10秒未満
+        } elseif ([Math]::Floor($rts[-1] / 10) -le 5) { # 10秒以上1分未満
+        } elseif ([Math]::Floor($rts[-1] / 10) -le 59) { # 1分以上10分未満
+        } elseif ([Math]::Floor($rts[-1] / 10) -le 359) { # 10分以上1時間未満
+        } else { # 1時間以上
         }
     }
 } else {
