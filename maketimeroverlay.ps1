@@ -14,9 +14,9 @@ fonttools varLib.mutator filename.ttf wght=value
 #>
 
 # 変数一覧(変更可能)
-[string]$defaultfolder = "$PSScriptRoot\av1test" # デフォルト: $PSScriptRoot
-[string]$vencodesetting = "-c:v h264_nvenc -qmin 18 -qmax 21" # デフォルト: "-c:v libx264 -qp 21" フィルターをかけるので"-c:v copy"は使えない
-[string]$aencodesetting = "-c:a copy" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
+[string]$defaultfolder = "$PSScriptRoot" # デフォルト: $PSScriptRoot
+[string]$vencodesetting = "-c:v libx264 -qp 21" # デフォルト: "-c:v libx264 -qp 21" フィルターをかけるので"-c:v copy"は使えない
+[string]$aencodesetting = "-c:a aac -q:a 1" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
 [string]$outputextension = "mp4" # デフォルト: "mp4" デフォルトがmp4向けのエンコード設定のため。ただし上のエンコード設定によっては変える必要あり、あとここで編集させているのはすぐ上にエンコード設定があるから
 <#
 目的別いろんなエンコードメモ
@@ -100,14 +100,11 @@ VP9(lissless)+Opus(非可逆圧縮だがWebm側が可逆圧縮の音声コーデ
 [array]$rtframes = @()
 [array]$gtframes = @()
 [array]$stframes = @()
-[int]$interval = @()
+[int]$interval = 0
 [array]$intervals = @()
 [array]$sts = @()
 [array]$gts = @()
 [array]$rts = @()
-[string]$row1y = '${texty}'
-[string]$row2y = '${texty}+lh+${linespace1}'
-[string]$row3y = '${texty}+lh+${linespace1}+lh+${linespace2}'
 
 
 ffmpeg -version | Out-Null
@@ -148,7 +145,7 @@ if ($IsWindows) {
     $logtext += "入力ファイル: ${inputfilename}"
     $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
     $videoframes = ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames"
-    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow -Wait
+    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow
 
     # モード選択
     do {
@@ -381,6 +378,8 @@ if ($IsWindows) {
                     }
                 }
             }
+            $row1 | Out-File -FilePath option.txt -Force
+            $row2 | Out-File -FilePath option.txt -Append
 
             # フォント選択
             if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
@@ -393,7 +392,7 @@ if ($IsWindows) {
                     Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                     $fontfile = Read-Host -Prompt "フォントを選択してください"
                 } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
-                $fontfile | Out-File -FilePath option.txt -Force
+                $fontfile | Out-File -FilePath option.txt -Append
                 $logtext += "フォント: ${defaultfolder}\${fontfile}"
             } else { # フォント0個
                 do {
@@ -402,7 +401,7 @@ if ($IsWindows) {
                     Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                     $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
                 } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
-                $fontfile | Out-File -FilePath option.txt -Force
+                $fontfile | Out-File -FilePath option.txt -Append
                 $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
                 $fontfile = "C\\:/Windows/Fonts/${fontfile}"
             }
@@ -522,7 +521,7 @@ if ($IsWindows) {
                             $logtext
                             $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
                         } until ($starts[0] -match "^([1-9]\d*)$")
-                    } until (v -le $videoframes)
+                    } until ($starts[0] -le $videoframes)
                     $logtext += "開始フレーム1: $($starts[0])"
                     do {
                         do {
@@ -553,7 +552,7 @@ if ($IsWindows) {
                         }
                         default {
                             if ([int]$starts[-1] -gt [int]$stops[-1]) {
-                                $logtext += "開始フレーム$($counter): $($starts[0])"
+                                $logtext += "開始フレーム$($counter): $($starts[-1])"
                                 $flag1 = 0
                                 do {
                                     do {
@@ -569,7 +568,7 @@ if ($IsWindows) {
                                         }
                                         default {
                                             if ([int]$stops[-1] -gt [int]$starts[-1]) {
-                                                $logtext += "停止フレーム$($counter): $($starts[0])"
+                                                $logtext += "停止フレーム$($counter): $($starts[-1])"
                                                 $counter += 1
                                                 $flag1 = 1
                                             }
@@ -580,7 +579,7 @@ if ($IsWindows) {
                         }
                     }
                     $logtext = $logtext[0..15]
-                    1..$counter | ForEach-Object {
+                    1..($counter - 1) | ForEach-Object {
                         $logtext += "開始フレーム${_}: $($starts[($_ - 1)])"
                         $logtext += "停止フレーム${_}: $($stops[($_ - 1)])"
                     }
@@ -589,8 +588,8 @@ if ($IsWindows) {
             0..($starts.Count - 1) | ForEach-Object {
                 $starts[$_] | Out-File -FilePath option.txt -Append
                 $stops[$_] | Out-File -FilePath option.txt -Append
-                "end" | Out-File -FilePath option.txt -Append
             }
+            "end" | Out-File -FilePath option.txt -Append
 
             # 非表示フレーム
             do {
@@ -608,60 +607,63 @@ if ($IsWindows) {
 
             0..($starts.Count - 1) | ForEach-Object {
                 $stframes += [int]$stops[$_] - [int]$starts[$_]
-                $gtframe += $stframes[-1]
-                $gtframes += $gtframes1
                 $rtframes += [int]$stops[$_] - [int]$starts[0]
                 $interval += [int]$starts[($_ + 1)] - [int]$stops[$_]
                 $intervals += $interval
             }
+            $stframes | ForEach-Object {
+                $gtframe += [int]$_
+                $gtframes += $gtframe
+            }
             $sts = $stframes | ForEach-Object {
-                [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+                [Math]::Round($_ / ($fps | Invoke-Expression), 3, 1)
             }
             $gts = $gtframes | ForEach-Object {
-                [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+                [Math]::Round($_ / ($fps | Invoke-Expression), 3, 1)
             }
             $rts = $rtframes | ForEach-Object {
-                [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+                [Math]::Round($_ / ($fps | Invoke-Expression), 3, 1)
             }
             $format = "0.000"
-            $gtmoveformat = '%{eif\:mod(floor(t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})),10)\:d\:1}.%{eif\:mod(round((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))*1000),1000)\:d\:3}'
-            $rtmoveformat = '%{eif\:mod(floor($($starts[0])/${fps})),10)\:d\:1}.%{eif\:mod(round(($($starts[0])/${fps}))*1000),1000)\:d\:3}'
-            $stmoveformat = '%{eif\:mod(floor(t-($($starts[$_])/${fps})),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$_])/${fps}))*1000),1000)\:d\:3}'
-            $gtstopformat = '%{eif\:mod(floor($($gtframes[$_])/${fps}),10)\:d\:1}.%{eif\:mod(round($($gtframes[$_])/${fps}*1000),1000)\:d\:3}'
-            $rtstopformat = '%{eif\:mod(floor($($rtframes[$_])/${fps}),10)\:d\:1}.%{eif\:mod(round($($rtframes[$_])/${fps}*1000),1000)\:d\:3}'
-            $ststopformat = '%{eif\:mod(floor($($stframes[$_])/${fps}),10)\:d\:1}.%{eif\:mod(round($($stframes[$_])/${fps}*1000),1000)\:d\:3}'
+            $gtmoveformat = '%{eif\:mod(floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$_])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})*1000),1000)\:d\:3}'
+            $rtmoveformat = '%{eif\:mod(floor((t-($($starts[0])/${fps}))),10)\:d\:1}.%{eif\:mod(round((t-($($starts[0])/${fps}))*1000),1000)\:d\:3}'
+            $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$_])/${fps}))*1000),1000)\:d\:3}'
+            $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})),10)\:d\:1}.%{eif\:mod(round(($($gtframes[$_])/${fps})*1000),1000)\:d\:3}'
+            $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})),10)\:d\:1}.%{eif\:mod(round(($($rtframes[$_])/${fps})*1000),1000)\:d\:3}'
+            $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})),10)\:d\:1}.%{eif\:mod(round(($($stframes[$_])/${fps})*1000),1000)\:d\:3}'
             if ([Math]::Floor($rts[-1] / 10)) {
                 $format = "0${format}"
-                $gtmoveformat = '%{eif\:mod(floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/10),6)\:d\:1}' + $gtmoveformat
-                $rtmoveformat = '%{eif\:mod(floor(($($starts[0])/${fps}))/10),6)\:d\:1}' + $rtmoveformat
+                $gtmoveformat = '%{eif\:mod(floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})/10),6)\:d\:1}' + $gtmoveformat
+                $rtmoveformat = '%{eif\:mod(floor((t-($($starts[0])/${fps}))/10),6)\:d\:1}' + $rtmoveformat
                 $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/10),6)\:d\:1}' + $stmoveformat
                 $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/10),6)\:d\:1}' + $gtstopformat
                 $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/10),6)\:d\:1}' + $rtstopformat
                 $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/10),6)\:d\:1}' + $ststopformat
                 if ([Math]::Floor($rts[-1] / 60)) {
                     $format = "0\:${format}"
-                    $gtmoveformat = '%{eif\:mod(floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/60),10)\:d\:1}' + $gtmoveformat
-                    $rtmoveformat = '%{eif\:mod(floor(($($starts[0])/${fps}))/60),10)\:d\:1}' + $rtmoveformat
-                    $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/60),10)\:d\:1}' + $stmoveformat
-                    $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/60),10)\:d\:1}' + $gtstopformat
-                    $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/60),10)\:d\:1}' + $rtstopformat
-                    $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/60),10)\:d\:1}' + $ststopformat
+                    $gtmoveformat = '%{eif\:mod(floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})/60),10)\:d\:1}\:' + $gtmoveformat
+                    $rtmoveformat = '%{eif\:mod(floor((t-($($starts[0])/${fps}))/60),10)\:d\:1}\:' + $rtmoveformat
+                    $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/60),10)\:d\:1}\:' + $stmoveformat
+                    $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/60),10)\:d\:1}\:' + $gtstopformat
+                    $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/60),10)\:d\:1}\:' + $rtstopformat
+                    $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/60),10)\:d\:1}\:' + $ststopformat
                     if ([Math]::Floor($rts[-1] / 600)) {
                         $format = "0${format}"
-                        $gtmoveformat = '%{eif\:mod(floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/600),6)\:d\:1}' + $gtmoveformat
-                        $rtmoveformat = '%{eif\:mod(floor(($($starts[0])/${fps}))/600),6)\:d\:1}' + $rtmoveformat
-                        $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/600),6)\:d\:1}' + $stmoveformat
-                        $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/600),6)\:d\:1}' + $gtstopformat
-                        $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/600),6)\:d\:1}' + $rtstopformat
-                        $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/600),6)\:d\:1}' + $ststopformat
+                        $gtmoveformat = '%{eif\:mod(floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})/360),6)\:d\:1}' + $gtmoveformat
+                        $rtmoveformat = '%{eif\:mod(floor((t-($($starts[0])/${fps}))/360),6)\:d\:1}' + $rtmoveformat
+                        $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/360),6)\:d\:1}' + $stmoveformat
+                        $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/360),6)\:d\:1}' + $gtstopformat
+                        $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/360),6)\:d\:1}' + $rtstopformat
+                        $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/360),6)\:d\:1}' + $ststopformat
                         if ([Math]::Floor($rts[-1] / 3600)) {
-                            $format = "" + ("").PadLeft(((([Math]::Floor($rts[-1] / 3600)).ToString()).Length),'0') + "\:${format}"
-                            $gtmoveformat = '%{eif\:floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $gtmoveformat
-                            $rtmoveformat = '%{eif\:floor(($($starts[0])/${fps}))/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $rtmoveformat
-                            $stmoveformat = '%{eif\:floor((t-($($starts[$_])/${fps}))/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $stmoveformat
-                            $gtstopformat = '%{eif\:floor(($($gtframes[$_])/${fps})/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $gtstopformat
-                            $rtstopformat = '%{eif\:floor(($($rtframes[$_])/${fps})/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $rtstopformat
-                            $ststopformat = '%{eif\:floor(($($stframes[$_])/${fps})/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $ststopformat
+                            $hourlength = (([Math]::Floor($rts[-1] / 3600)).ToString()).Length
+                            $format = "" + ("").PadLeft($hourlength,'0') + "\:${format}"
+                            $gtmoveformat = '%{eif\:floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})/3600)\:d\:${hourlength}}\:' + $gtmoveformat
+                            $rtmoveformat = '%{eif\:floor((t-($($starts[0])/${fps}))/3600)\:d\:${hourlength}}\:' + $rtmoveformat
+                            $stmoveformat = '%{eif\:floor((t-($($starts[$_])/${fps}))/3600)\:d\:${hourlength}}\:' + $stmoveformat
+                            $gtstopformat = '%{eif\:floor(($($gtframes[$_])/${fps})/3600)\:d\:${hourlength}}\:' + $gtstopformat
+                            $rtstopformat = '%{eif\:floor(($($rtframes[$_])/${fps})/3600)\:d\:${hourlength}}\:' + $rtstopformat
+                            $ststopformat = '%{eif\:floor(($($stframes[$_])/${fps})/3600)\:d\:${hourlength}}\:' + $ststopformat
                         }
                     }
                 }
@@ -676,122 +678,122 @@ if ($IsWindows) {
             switch ("${row1}${row2}${row3}") {
                 "123" {
                     #GT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($gts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #RT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($rts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #ST
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($sts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                 }
                 "132" {
                     #GT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($gts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #ST
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($sts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #RT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($rts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                 }
                 "213" {
                     #RT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($rts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #GT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($gts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #ST
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($sts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                 }
                 "231" {
                     #RT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($rts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #ST
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($sts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #GT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($gts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                 }
                 "312" {
                     #ST
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($sts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #GT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($gts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #RT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($rts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                 }
                 "321" {
                     #ST
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($sts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #RT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($rts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor2}:fontsize=${textsize2}:x=${textx}:y=${texty}+${linespace1}+lh:text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                     #GT
-                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
                     0..($gts.Count - 1) | ForEach-Object {
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor3}:fontsize=${textsize3}:x=${textx}:y=${texty}+${linespace1}+${linespace2}+lh+lh:text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
                     }
                 }
             }
@@ -799,6 +801,7 @@ if ($IsWindows) {
             Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
             do {
                 Clear-Host
+                $intervals
                 $logtext
                 $confirm = Read-Host -Prompt "これで動画を作成しますか?(yn)`nNを選ぶとフォント選択に戻ります`nこれまでの入力はoption.txtに自動で保存されています"
             } until ($confirm -match "^[YyNn]$")
