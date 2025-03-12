@@ -18,6 +18,9 @@ fonttools varLib.mutator filename.ttf wght=value
 [string]$vencodesetting = "-c:v libx264 -qp 21" # デフォルト: "-c:v libx264 -qp 21" フィルターをかけるので"-c:v copy"は使えない
 [string]$aencodesetting = "-c:a aac -q:a 1" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
 [string]$outputextension = "mp4" # デフォルト: "mp4" デフォルトがmp4向けのエンコード設定のため。ただし上のエンコード設定によっては変える必要あり、あとここで編集させているのはすぐ上にエンコード設定があるから
+[string]$vencodesetting = "-c:v ffv1 -level 3"
+[string]$aencodesetting = "-c:a flac"
+[string]$outputextension = "mkv"
 <#
 目的別いろんなエンコードメモ
 再生できればいいからとにかく容量を小さくしたい場合
@@ -138,18 +141,18 @@ if ($IsWindows) {
        exit
     }
     do {
-        Clear-Host
+        #Clear-Host
         $inputfilelist
         $inputfilename = Read-Host -Prompt "動画ファイルを選択"
     } until ($inputfilename -in $inputfilelist)
     $logtext += "入力ファイル: ${inputfilename}"
     $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
     $videoframes = ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames"
-    Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=y_align=font:fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow
+    #Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=y_align=font:fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow
 
     # モード選択
     do {
-        Clear-Host
+        #Clear-Host
         $logtext
         $mode = Read-Host -Prompt "1:ILs 2:Full-Game"
     } until ($mode -match "^[12]$")
@@ -163,7 +166,7 @@ if ($IsWindows) {
                 $logtext += "フォント: ${defaultfolder}\${fontfile}"
             } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                     $fontfile = Read-Host -Prompt "フォントを選択してください"
@@ -172,7 +175,7 @@ if ($IsWindows) {
                 $logtext += "フォント: ${defaultfolder}\${fontfile}"
             } else { # フォント0個
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                     $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
@@ -183,7 +186,7 @@ if ($IsWindows) {
             }
             # 文字色の入力
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textcolor = Read-Host -Prompt "文字の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
             } until ($textcolor -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor -in $colors)
@@ -195,7 +198,7 @@ if ($IsWindows) {
 
             # 文字サイズの指定
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textsize = Read-Host -Prompt "文字サイズ(1以上の整数)"
             } until ($textsize -match "^[1-9]\d*$") # 1以上の整数
@@ -204,14 +207,14 @@ if ($IsWindows) {
 
             # 文字座標の指定
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textx = Read-Host -Prompt "文字のx座標(正負の整数)"
             } until ($textx -match "^(0|-?[1-9]\d*)$")
             $textx | Out-File -FilePath option.txt -Append
             $logtext += "文字x座標: ${textx}"
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $texty = Read-Host -Prompt "文字のy座標(正負の整数)"
             } until ($texty -match "^(0|-?[1-9]\d*)$")
@@ -221,7 +224,7 @@ if ($IsWindows) {
             # 表示フレーム
             do {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
                 } until ($appearat -match "^(0|[1-9]\d*)$")
@@ -232,7 +235,7 @@ if ($IsWindows) {
             # 開始フレーム
             do {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     $startat = Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
                 } until ($startat -match "^([1-9]\d*)$")
@@ -243,7 +246,7 @@ if ($IsWindows) {
             # 停止フレーム
             do {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     $stopat = Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
                 } until ($stopat -match "^(0|[1-9]\d*)$")
@@ -254,7 +257,7 @@ if ($IsWindows) {
             # 非表示フレーム
             do {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
                 } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
@@ -286,7 +289,7 @@ if ($IsWindows) {
             }
             Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $confirm = Read-Host -Prompt "これで動画を作成しますか?(yn)`nNを選ぶとフォント選択に戻ります`nこれまでの入力はoption.txtに自動で保存されています"
             } until ($confirm -match "^[YyNn]$")
@@ -298,13 +301,13 @@ if ($IsWindows) {
         $confirm = ""
         do {
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $outputfilename=Read-Host -Prompt "拡張子なしのファイル名(拡張子には${outputextension}が付きます)"
             } until (-not ($outputfilename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("${defaultfolder}\${filename}").Length -le 250)
             if ((Test-Path "${defaultfolder}\${outputfilename}.${outputextension}")) {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     Write-Host "現在のファイル名: ${defaultfolder}\${outputfilename}.${outputextension}"
                     $confirm=Read-Host -Prompt "ファイルが既に存在します。上書きしますか?(yn)"
@@ -321,7 +324,7 @@ if ($IsWindows) {
         $logtext += "モード: Full-Game"
         do {
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $row1 = Read-Host -Prompt "1行目`n1:GT 2:RT 3:ST"
             } until ($row1 -match "^[123]$")
@@ -329,7 +332,7 @@ if ($IsWindows) {
                 1 {
                     $logtext += "1行目: GT"
                     do {
-                        Clear-Host
+                        #Clear-Host
                         $logtext        
                         $row2 = Read-Host -Prompt "2行目`n2:RT 3:ST"
                     } until ($row2 -match "^[23]$")
@@ -346,7 +349,7 @@ if ($IsWindows) {
                 2 {
                     $logtext += "1行目: RT"
                     do {
-                        Clear-Host
+                        #Clear-Host
                         $logtext        
                         $row2 = Read-Host -Prompt "2行目`n1:GT 3:ST"
                     } until ($row2 -match "^[13]$")
@@ -363,7 +366,7 @@ if ($IsWindows) {
                 3 {
                     $logtext += "1行目: ST"
                     do {
-                        Clear-Host
+                        #Clear-Host
                         $logtext        
                         $row2 = Read-Host -Prompt "2行目`n1:GT 2:RT"
                     } until ($row2 -match "^[12]$")
@@ -387,7 +390,7 @@ if ($IsWindows) {
                 $logtext += "フォント: ${defaultfolder}\${fontfile}"
             } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                     $fontfile = Read-Host -Prompt "フォントを選択してください"
@@ -396,7 +399,7 @@ if ($IsWindows) {
                 $logtext += "フォント: ${defaultfolder}\${fontfile}"
             } else { # フォント0個
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
                     $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
@@ -408,7 +411,7 @@ if ($IsWindows) {
 
             # 文字色の入力1
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textcolor1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
             } until ($textcolor1 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor1 -in $colors)
@@ -419,7 +422,7 @@ if ($IsWindows) {
             $logtext += "文字色(1行目): ${textcolor1}"
             # 文字サイズの指定1
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textsize1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の文字サイズ(1以上の整数)"
             } until ($textsize1 -match "^[1-9]\d*$") # 1以上の整数
@@ -427,7 +430,7 @@ if ($IsWindows) {
             $logtext += "文字サイズ(1行目): ${textsize1}"
             # 文字色の入力2
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textcolor2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
             } until ($textcolor2 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor2 -in $colors)
@@ -438,7 +441,7 @@ if ($IsWindows) {
             $logtext += "文字色(2行目): ${textcolor2}"
             # 文字サイズの指定2
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textsize2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の文字サイズ(1以上の整数)"
             } until ($textsize2 -match "^[1-9]\d*$") # 1以上の整数
@@ -446,7 +449,7 @@ if ($IsWindows) {
             $logtext += "文字サイズ(2行目): ${textsize2}"
             # 文字色の入力3
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textcolor3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
             } until ($textcolor3 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor3 -in $colors)
@@ -457,7 +460,7 @@ if ($IsWindows) {
             $logtext += "文字色(3行目): ${textcolor3}"
             # 文字サイズの指定3
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textsize3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の文字サイズ(1以上の整数)"
             } until ($textsize3 -match "^[1-9]\d*$") # 1以上の整数
@@ -466,14 +469,14 @@ if ($IsWindows) {
 
             # 文字座標の指定
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $textx = Read-Host -Prompt "文字のx座標(正負の整数)1行目の左が基準になります"
             } until ($textx -match "^(0|-?[1-9]\d*)$")
             $textx | Out-File -FilePath option.txt -Append
             $logtext += "文字x座標: ${textx}"
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $texty = Read-Host -Prompt "文字のy座標(正負の整数)1行目の上が基準になります"
             } until ($texty -match "^(0|-?[1-9]\d*)$")
@@ -482,7 +485,7 @@ if ($IsWindows) {
 
             # 行間の指定1
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $linespace1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))と2行目($($logtext[3].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
             } until ($linespace1 -match "^(0|-?[1-9]\d*)$")
@@ -490,7 +493,7 @@ if ($IsWindows) {
             $logtext += "行間1: ${linespace1}"
             # 行間の指定2
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $linespace2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))と3行目($($logtext[4].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
             } until ($linespace2 -match "^(0|-?[1-9]\d*)$")
@@ -503,7 +506,7 @@ if ($IsWindows) {
             # 表示フレーム
             do {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
                 } until ($appearat -match "^(0|[1-9]\d*)$")
@@ -518,7 +521,7 @@ if ($IsWindows) {
                     do {
                         do {
                             $starts = @()
-                            Clear-Host
+                            #Clear-Host
                             $logtext
                             $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
                         } until ($starts[0] -match "^([1-9]\d*)$")
@@ -527,7 +530,7 @@ if ($IsWindows) {
                     do {
                         do {
                             $stops = @()
-                            Clear-Host
+                            #Clear-Host
                             $logtext
                             $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
                         } until ($stops[0] -match "^([1-9]\d*)$")
@@ -537,7 +540,7 @@ if ($IsWindows) {
                 } else {
                     do {
                         $starts = @($starts[0..($counter - 2)])
-                        Clear-Host
+                        #Clear-Host
                         $logtext
                         $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)`n$(if ($counter -ge 3) {"endで終了、"})undoで1つ戻る"
                     } until ($starts[-1] -match "^([1-9]\d*|end|undo)$")
@@ -558,7 +561,7 @@ if ($IsWindows) {
                                 do {
                                     do {
                                         $stops = @($stops[0..($counter - 2)])
-                                        Clear-Host
+                                        #Clear-Host
                                         $logtext
                                         $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)`ncancelで開始フレームに戻る"
                                     } until ($stops[-1] -match "^([1-9]\d*|cancel)$")
@@ -595,7 +598,7 @@ if ($IsWindows) {
             # 非表示フレーム
             do {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
                 } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
@@ -635,7 +638,7 @@ if ($IsWindows) {
                 [Math]::Round($_ / ($fps | Invoke-Expression), 3, 1)
             }
             $format = "0.000"
-            $gtmoveformat = '%{eif\:mod(floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$_])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})*1000),1000)\:d\:3}'
+            $gtmoveformat = '%{eif\:mod(floor((t-($($starts[0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$0])+$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})*1000),1000)\:d\:3}'
             $rtmoveformat = '%{eif\:mod(floor((t-($($starts[0])/${fps}))),10)\:d\:1}.%{eif\:mod(round((t-($($starts[0])/${fps}))*1000),1000)\:d\:3}'
             $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$_])/${fps}))*1000),1000)\:d\:3}'
             $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})),10)\:d\:1}.%{eif\:mod(round(($($gtframes[$_])/${fps})*1000),1000)\:d\:3}'
@@ -810,7 +813,7 @@ if ($IsWindows) {
             $timertext += "null"
             Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel error -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $confirm = Read-Host -Prompt "これで動画を作成しますか?(yn)`nNを選ぶとフォント選択に戻ります`nこれまでの入力はoption.txtに自動で保存されています"
             } until ($confirm -match "^[YyNn]$")
@@ -821,13 +824,13 @@ if ($IsWindows) {
         } until ($confirm -match "^[yY]$")
         do {
             do {
-                Clear-Host
+                #Clear-Host
                 $logtext
                 $outputfilename=Read-Host -Prompt "拡張子なしのファイル名(拡張子には${outputextension}が付きます)"
             } until (-not ($outputfilename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("${defaultfolder}\${filename}").Length -le 250)
             if ((Test-Path "${defaultfolder}\${outputfilename}.${outputextension}")) {
                 do {
-                    Clear-Host
+                    #Clear-Host
                     $logtext
                     Write-Host "現在のファイル名: ${defaultfolder}\${outputfilename}.${outputextension}"
                     $confirm=Read-Host -Prompt "ファイルが既に存在します。上書きしますか?(yn)"
