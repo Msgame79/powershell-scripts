@@ -105,18 +105,9 @@ VP9(lissless)+Opus(非可逆圧縮だがWebm側が可逆圧縮の音声コーデ
 [array]$sts = @()
 [array]$gts = @()
 [array]$rts = @()
-[array]$sthours = @()
-[array]$stminutes = @()
-[array]$stseconds = @()
-[array]$stmilliseconds = @()
-[array]$gthours = @()
-[array]$gtminutes = @()
-[array]$gtseconds = @()
-[array]$gtmilliseconds = @()
-[array]$rthours = @()
-[array]$rtminutes = @()
-[array]$rtseconds = @()
-[array]$rtmilliseconds = @()
+[string]$row1y = '${texty}'
+[string]$row2y = '${texty}+lh+${linespace1}'
+[string]$row3y = '${texty}+lh+${linespace1}+lh+${linespace2}'
 
 
 ffmpeg -version | Out-Null
@@ -332,410 +323,511 @@ if ($IsWindows) {
     } else { # Full-Game
         $logtext += "モード: Full-Game"
         do {
-            Clear-Host
-            $logtext
-            $row1 = Read-Host -Prompt "1行目`n1:GT 2:RT 3:ST"
-        } until ($row1 -match "^[123]$")
-        switch  ([int]$row1) {
-            1 {
-                $logtext += "1行目: GT"
-                do {
-                    Clear-Host
-                    $logtext        
-                    $row2 = Read-Host -Prompt "2行目`n2:RT 3:ST"
-                } until ($row2 -match "^[23]$")
-                if ($row2 -match "^2$") { # 123
-                    $row3 = "3"
-                    $logtext += "2行目: RT"
-                    $logtext += "3行目: ST"
-                } else { # 132
-                    $row3 = "2"
-                    $logtext += "2行目: ST"
-                    $logtext += "3行目: RT"
-                }
-            }
-            2 {
-                $logtext += "1行目: RT"
-                do {
-                    Clear-Host
-                    $logtext        
-                    $row2 = Read-Host -Prompt "2行目`n1:GT 3:ST"
-                } until ($row2 -match "^[13]$")
-                if ($row2 -match "^1$") { # 213
-                    $row3 = "3"
-                    $logtext += "2行目: GT"
-                    $logtext += "3行目: ST"
-                } else { # 231
-                    $row3 = "1"
-                    $logtext += "2行目: ST"
-                    $logtext += "3行目: GT"
-                }
-            }
-            3 {
-                $logtext += "1行目: ST"
-                do {
-                    Clear-Host
-                    $logtext        
-                    $row2 = Read-Host -Prompt "2行目`n1:GT 2:RT"
-                } until ($row2 -match "^[12]$")
-                if ($row2 -match "^1$") { # 312
-                    $row3 = "2"
-                    $logtext += "2行目: GT"
-                    $logtext += "3行目: RT"
-                } else { # 321
-                    $row3 = "1"
-                    $logtext += "2行目: RT"
-                    $logtext += "3行目: GT"
-                }
-            }
-        }
-
-        # フォント選択
-        if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
-            $fontfile = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
-            $logtext += "フォント: ${defaultfolder}\${fontfile}"
-        } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
             do {
                 Clear-Host
                 $logtext
-                Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
-                $fontfile = Read-Host -Prompt "フォントを選択してください"
-            } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
-            $fontfile | Out-File -FilePath option.txt -Force
-            $logtext += "フォント: ${defaultfolder}\${fontfile}"
-        } else { # フォント0個
-            do {
-                Clear-Host
-                $logtext
-                Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
-                $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
-            } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
-            $fontfile | Out-File -FilePath option.txt -Force
-            $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
-            $fontfile = "C\\:/Windows/Fonts/${fontfile}"
-        }
-
-        # 文字色の入力1
-        do {
-            Clear-Host
-            $logtext
-            $textcolor1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
-        } until ($textcolor1 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor1 -in $colors)
-        $textcolor1 | Out-File -FilePath option.txt -Append
-        if ($textcolor1 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
-            $textcolor1 = $Matches[1]
-        }
-        $logtext += "文字色(1行目): ${textcolor1}"
-        # 文字サイズの指定1
-        do {
-            Clear-Host
-            $logtext
-            $textsize1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の文字サイズ(1以上の整数)"
-        } until ($textsize1 -match "^[1-9]\d*$") # 1以上の整数
-        $textsize1 | Out-File -FilePath option.txt -Append
-        $logtext += "文字サイズ(1行目): ${textsize1}"
-        # 文字色の入力2
-        do {
-            Clear-Host
-            $logtext
-            $textcolor2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
-        } until ($textcolor2 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor2 -in $colors)
-        $textcolor2 | Out-File -FilePath option.txt -Append
-        if ($textcolor2 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
-            $textcolor2 = $Matches[1]
-        }
-        $logtext += "文字色(2行目): ${textcolor2}"
-        # 文字サイズの指定2
-        do {
-            Clear-Host
-            $logtext
-            $textsize2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の文字サイズ(1以上の整数)"
-        } until ($textsize2 -match "^[1-9]\d*$") # 1以上の整数
-        $textsize2 | Out-File -FilePath option.txt -Append
-        $logtext += "文字サイズ(2行目): ${textsize2}"
-        # 文字色の入力3
-        do {
-            Clear-Host
-            $logtext
-            $textcolor3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
-        } until ($textcolor3 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor3 -in $colors)
-        $textcolor3 | Out-File -FilePath option.txt -Append
-        if ($textcolor3 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
-            $textcolor3 = $Matches[1]
-        }
-        $logtext += "文字色(3行目): ${textcolor3}"
-        # 文字サイズの指定3
-        do {
-            Clear-Host
-            $logtext
-            $textsize3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の文字サイズ(1以上の整数)"
-        } until ($textsize3 -match "^[1-9]\d*$") # 1以上の整数
-        $textsize3 | Out-File -FilePath option.txt -Append
-        $logtext += "文字サイズ(3行目): ${textsize3}"
-
-        # 文字座標の指定
-        do {
-            Clear-Host
-            $logtext
-            $textx = Read-Host -Prompt "文字のx座標(正負の整数)1行目の左が基準になります"
-        } until ($textx -match "^(0|-?[1-9]\d*)$")
-        $textx | Out-File -FilePath option.txt -Append
-        $logtext += "文字x座標: ${textx}"
-        do {
-            Clear-Host
-            $logtext
-            $texty = Read-Host -Prompt "文字のy座標(正負の整数)1行目の上が基準になります"
-        } until ($texty -match "^(0|-?[1-9]\d*)$")
-        $texty | Out-File -FilePath option.txt -Append
-        $logtext += "文字y座標: ${texty}"
-
-        # 行間の指定1
-        do {
-            Clear-Host
-            $logtext
-            $linespace1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))と2行目($($logtext[3].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
-        } until ($linespace1 -match "^(0|-?[1-9]\d*)$")
-        $linespace1 | Out-File option.txt -Append
-        $logtext += "行間1: ${linespace1}"
-        # 行間の指定2
-        do {
-            Clear-Host
-            $logtext
-            $linespace2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))と3行目($($logtext[4].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
-        } until ($linespace2 -match "^(0|-?[1-9]\d*)$")
-        $linespace2 | Out-File option.txt -Append
-        $logtext += "行間2: ${linespace2}"
-
-
-
-        # いよいよタイマーを作っていく
-        # 表示フレーム
-        do {
-            do {
-                Clear-Host
-                $logtext
-                $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
-            } until ($appearat -match "^(0|[1-9]\d*)$")
-        } until ([int]$appearat -le $videoframes)
-        $appearat | Out-File -FilePath option.txt -Append
-        $logtext += "表示フレーム: ${appearat}"
-        $counter = 1
-        do {
-            if ($counter -eq 1) {
-                $logtext = $logtext[0..15]
-                do {
+                $row1 = Read-Host -Prompt "1行目`n1:GT 2:RT 3:ST"
+            } until ($row1 -match "^[123]$")
+            switch  ([int]$row1) {
+                1 {
+                    $logtext += "1行目: GT"
                     do {
-                        $starts = @()
                         Clear-Host
-                        $logtext
-                        $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
-                    } until ($starts[0] -match "^([1-9]\d*)$")
-                } until (v -le $videoframes)
-                $logtext += "開始フレーム1: $($starts[0])"
-                do {
+                        $logtext        
+                        $row2 = Read-Host -Prompt "2行目`n2:RT 3:ST"
+                    } until ($row2 -match "^[23]$")
+                    if ($row2 -match "^2$") { # 123
+                        $row3 = "3"
+                        $logtext += "2行目: RT"
+                        $logtext += "3行目: ST"
+                    } else { # 132
+                        $row3 = "2"
+                        $logtext += "2行目: ST"
+                        $logtext += "3行目: RT"
+                    }
+                }
+                2 {
+                    $logtext += "1行目: RT"
                     do {
-                        $stops = @()
                         Clear-Host
-                        $logtext
-                        $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
-                    } until ($stops[0] -match "^([1-9]\d*)$")
-                } until ([int]$stops[0] -le $videoframes -and [int]$stops[0] -gt [int]$starts[0])
-                $logtext += "停止フレーム1: $($starts[0])"
-                $counter += 1
-            } else {
+                        $logtext        
+                        $row2 = Read-Host -Prompt "2行目`n1:GT 3:ST"
+                    } until ($row2 -match "^[13]$")
+                    if ($row2 -match "^1$") { # 213
+                        $row3 = "3"
+                        $logtext += "2行目: GT"
+                        $logtext += "3行目: ST"
+                    } else { # 231
+                        $row3 = "1"
+                        $logtext += "2行目: ST"
+                        $logtext += "3行目: GT"
+                    }
+                }
+                3 {
+                    $logtext += "1行目: ST"
+                    do {
+                        Clear-Host
+                        $logtext        
+                        $row2 = Read-Host -Prompt "2行目`n1:GT 2:RT"
+                    } until ($row2 -match "^[12]$")
+                    if ($row2 -match "^1$") { # 312
+                        $row3 = "2"
+                        $logtext += "2行目: GT"
+                        $logtext += "3行目: RT"
+                    } else { # 321
+                        $row3 = "1"
+                        $logtext += "2行目: RT"
+                        $logtext += "3行目: GT"
+                    }
+                }
+            }
+
+            # フォント選択
+            if ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -eq 1) { # フォント1個
+                $fontfile = Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                $logtext += "フォント: ${defaultfolder}\${fontfile}"
+            } elseif ((Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}).Count -ge 2) { # フォント2個以上
                 do {
-                    $starts = @($starts[0..($counter - 2)])
                     Clear-Host
                     $logtext
-                    $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)`n$(if ($counter -ge 3) {"endで終了、"})undoで1つ戻る"
-                } until ($starts[-1] -match "^([1-9]\d*|end|undo)$")
-                switch ($starts[-1]) {
-                    "end" {
-                        if ($counter -ge 3) {
-                            $isend = 1
-                            $starts = $starts[0..($starts.Count - 2)]
+                    Get-ChildItem -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                    $fontfile = Read-Host -Prompt "フォントを選択してください"
+                } until ((Test-Path "${defaultfolder}\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+                $fontfile | Out-File -FilePath option.txt -Force
+                $logtext += "フォント: ${defaultfolder}\${fontfile}"
+            } else { # フォント0個
+                do {
+                    Clear-Host
+                    $logtext
+                    Get-ChildItem -Path "C:\Windows\Fonts" -Name | Where-Object {$_ -match "^.+\.(ttf|otf|ttc)$"}
+                    $fontfile = Read-Host -Prompt "インストールされているフォントから選択してください"
+                } until ((Test-Path "C:\Windows\Fonts\${fontfile}") -and $fontfile -match "^.+\.(ttf|otf|ttc)$")
+                $fontfile | Out-File -FilePath option.txt -Force
+                $logtext += "フォント: C:\Windows\Fonts\${fontfile}"
+                $fontfile = "C\\:/Windows/Fonts/${fontfile}"
+            }
+
+            # 文字色の入力1
+            do {
+                Clear-Host
+                $logtext
+                $textcolor1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+            } until ($textcolor1 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor1 -in $colors)
+            $textcolor1 | Out-File -FilePath option.txt -Append
+            if ($textcolor1 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+                $textcolor1 = $Matches[1]
+            }
+            $logtext += "文字色(1行目): ${textcolor1}"
+            # 文字サイズの指定1
+            do {
+                Clear-Host
+                $logtext
+                $textsize1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))の文字サイズ(1以上の整数)"
+            } until ($textsize1 -match "^[1-9]\d*$") # 1以上の整数
+            $textsize1 | Out-File -FilePath option.txt -Append
+            $logtext += "文字サイズ(1行目): ${textsize1}"
+            # 文字色の入力2
+            do {
+                Clear-Host
+                $logtext
+                $textcolor2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+            } until ($textcolor2 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor2 -in $colors)
+            $textcolor2 | Out-File -FilePath option.txt -Append
+            if ($textcolor2 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+                $textcolor2 = $Matches[1]
+            }
+            $logtext += "文字色(2行目): ${textcolor2}"
+            # 文字サイズの指定2
+            do {
+                Clear-Host
+                $logtext
+                $textsize2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))の文字サイズ(1以上の整数)"
+            } until ($textsize2 -match "^[1-9]\d*$") # 1以上の整数
+            $textsize2 | Out-File -FilePath option.txt -Append
+            $logtext += "文字サイズ(2行目): ${textsize2}"
+            # 文字色の入力3
+            do {
+                Clear-Host
+                $logtext
+                $textcolor3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の色(RGB(A)カラーコードまたは色の名前)Aは小さくすると消えます"
+            } until ($textcolor3 -match "^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" -or $textcolor3 -in $colors)
+            $textcolor3 | Out-File -FilePath option.txt -Append
+            if ($textcolor3 -match "^#?([0-9a-fA-F]{6}([0-9a-fA-F]{2})?)$") {
+                $textcolor3 = $Matches[1]
+            }
+            $logtext += "文字色(3行目): ${textcolor3}"
+            # 文字サイズの指定3
+            do {
+                Clear-Host
+                $logtext
+                $textsize3 = Read-Host -Prompt "3行目($($logtext[4].Substring(5,2)))の文字サイズ(1以上の整数)"
+            } until ($textsize3 -match "^[1-9]\d*$") # 1以上の整数
+            $textsize3 | Out-File -FilePath option.txt -Append
+            $logtext += "文字サイズ(3行目): ${textsize3}"
+
+            # 文字座標の指定
+            do {
+                Clear-Host
+                $logtext
+                $textx = Read-Host -Prompt "文字のx座標(正負の整数)1行目の左が基準になります"
+            } until ($textx -match "^(0|-?[1-9]\d*)$")
+            $textx | Out-File -FilePath option.txt -Append
+            $logtext += "文字x座標: ${textx}"
+            do {
+                Clear-Host
+                $logtext
+                $texty = Read-Host -Prompt "文字のy座標(正負の整数)1行目の上が基準になります"
+            } until ($texty -match "^(0|-?[1-9]\d*)$")
+            $texty | Out-File -FilePath option.txt -Append
+            $logtext += "文字y座標: ${texty}"
+
+            # 行間の指定1
+            do {
+                Clear-Host
+                $logtext
+                $linespace1 = Read-Host -Prompt "1行目($($logtext[2].Substring(5,2)))と2行目($($logtext[3].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
+            } until ($linespace1 -match "^(0|-?[1-9]\d*)$")
+            $linespace1 | Out-File option.txt -Append
+            $logtext += "行間1: ${linespace1}"
+            # 行間の指定2
+            do {
+                Clear-Host
+                $logtext
+                $linespace2 = Read-Host -Prompt "2行目($($logtext[3].Substring(5,2)))と3行目($($logtext[4].Substring(5,2)))の行間(正負の整数)プレビューを見ながら検討してください"
+            } until ($linespace2 -match "^(0|-?[1-9]\d*)$")
+            $linespace2 | Out-File option.txt -Append
+            $logtext += "行間2: ${linespace2}"
+
+
+
+            # いよいよタイマーを作っていく
+            # 表示フレーム
+            do {
+                do {
+                    Clear-Host
+                    $logtext
+                    $appearat = Read-Host -Prompt "タイマーを出すフレーム(0以上の整数)0で最初から表示します"
+                } until ($appearat -match "^(0|[1-9]\d*)$")
+            } until ([int]$appearat -le $videoframes)
+            $appearat | Out-File -FilePath option.txt -Append
+            $logtext += "表示フレーム: ${appearat}"
+            $counter = 1
+            do {
+                if ($counter -eq 1) {
+                    $logtext = $logtext[0..15]
+                    do {
+                        do {
+                            $starts = @()
+                            Clear-Host
+                            $logtext
+                            $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
+                        } until ($starts[0] -match "^([1-9]\d*)$")
+                    } until (v -le $videoframes)
+                    $logtext += "開始フレーム1: $($starts[0])"
+                    do {
+                        do {
+                            $stops = @()
+                            Clear-Host
+                            $logtext
+                            $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
+                        } until ($stops[0] -match "^([1-9]\d*)$")
+                    } until ([int]$stops[0] -le $videoframes -and [int]$stops[0] -gt [int]$starts[0])
+                    $logtext += "停止フレーム1: $($starts[0])"
+                    $counter += 1
+                } else {
+                    do {
+                        $starts = @($starts[0..($counter - 2)])
+                        Clear-Host
+                        $logtext
+                        $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)`n$(if ($counter -ge 3) {"endで終了、"})undoで1つ戻る"
+                    } until ($starts[-1] -match "^([1-9]\d*|end|undo)$")
+                    switch ($starts[-1]) {
+                        "end" {
+                            if ($counter -ge 3) {
+                                $isend = 1
+                                $starts = $starts[0..($starts.Count - 2)]
+                            }
                         }
-                    }
-                    "undo" {
-                        $counter -= 1
-                    }
-                    default {
-                        if ([int]$starts[-1] -gt [int]$stops[-1]) {
-                            $logtext += "開始フレーム$($counter): $($starts[0])"
-                            $flag1 = 0
-                            do {
+                        "undo" {
+                            $counter -= 1
+                        }
+                        default {
+                            if ([int]$starts[-1] -gt [int]$stops[-1]) {
+                                $logtext += "開始フレーム$($counter): $($starts[0])"
+                                $flag1 = 0
                                 do {
-                                    $stops = @($stops[0..($counter - 2)])
-                                    Clear-Host
-                                    $logtext
-                                    $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)`ncancelで開始フレームに戻る"
-                                } until ($stops[-1] -match "^([1-9]\d*|cancel)$")
-                                switch ($stops[-1]) {
-                                    "cancel" {
-                                        $stops = @($starts[0..($counter - 2)])
-                                        $flag1 = 1
-                                    }
-                                    default {
-                                        if ([int]$stops[-1] -gt [int]$starts[-1]) {
-                                            $logtext += "停止フレーム$($counter): $($starts[0])"
-                                            $counter += 1
+                                    do {
+                                        $stops = @($stops[0..($counter - 2)])
+                                        Clear-Host
+                                        $logtext
+                                        $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)`ncancelで開始フレームに戻る"
+                                    } until ($stops[-1] -match "^([1-9]\d*|cancel)$")
+                                    switch ($stops[-1]) {
+                                        "cancel" {
+                                            $stops = @($starts[0..($counter - 2)])
                                             $flag1 = 1
                                         }
+                                        default {
+                                            if ([int]$stops[-1] -gt [int]$starts[-1]) {
+                                                $logtext += "停止フレーム$($counter): $($starts[0])"
+                                                $counter += 1
+                                                $flag1 = 1
+                                            }
+                                        }
                                     }
-                                }
-                            } until ($flag1)
+                                } until ($flag1)
+                            }
+                        }
+                    }
+                    $logtext = $logtext[0..15]
+                    1..$counter | ForEach-Object {
+                        $logtext += "開始フレーム${_}: $($starts[($_ - 1)])"
+                        $logtext += "停止フレーム${_}: $($stops[($_ - 1)])"
+                    }
+                }
+            } until ($isend)
+            0..($starts.Count - 1) | ForEach-Object {
+                $starts[$_] | Out-File -FilePath option.txt -Append
+                $stops[$_] | Out-File -FilePath option.txt -Append
+                "end" | Out-File -FilePath option.txt -Append
+            }
+
+            # 非表示フレーム
+            do {
+                do {
+                    Clear-Host
+                    $logtext
+                    $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
+                } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
+            } until (([int]$disappearat -gt [int]$stops[-1] -and [int]$disappearat -le $videoframes) -or $disappearat -match "^-1$")
+            $disappearat | Out-File -FilePath option.txt -Append
+            if ($disappearat -match "^-1$") {
+                $disappearat = $videoframes
+            }
+            $logtext += "非表示フレーム: ${disappearat}"
+
+            0..($starts.Count - 1) | ForEach-Object {
+                $stframes += [int]$stops[$_] - [int]$starts[$_]
+                $gtframe += $stframes[-1]
+                $gtframes += $gtframes1
+                $rtframes += [int]$stops[$_] - [int]$starts[0]
+                $interval += [int]$starts[($_ + 1)] - [int]$stops[$_]
+                $intervals += $interval
+            }
+            $sts = $stframes | ForEach-Object {
+                [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+            }
+            $gts = $gtframes | ForEach-Object {
+                [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+            }
+            $rts = $rtframes | ForEach-Object {
+                [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
+            }
+            $format = "0.000"
+            $gtmoveformat = '%{eif\:mod(floor(t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps})),10)\:d\:1}.%{eif\:mod(round((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))*1000),1000)\:d\:3}'
+            $rtmoveformat = '%{eif\:mod(floor($($starts[0])/${fps})),10)\:d\:1}.%{eif\:mod(round(($($starts[0])/${fps}))*1000),1000)\:d\:3}'
+            $stmoveformat = '%{eif\:mod(floor(t-($($starts[$_])/${fps})),10)\:d\:1}.%{eif\:mod(round((t-($($starts[$_])/${fps}))*1000),1000)\:d\:3}'
+            $gtstopformat = '%{eif\:mod(floor($($gtframes[$_])/${fps}),10)\:d\:1}.%{eif\:mod(round($($gtframes[$_])/${fps}*1000),1000)\:d\:3}'
+            $rtstopformat = '%{eif\:mod(floor($($rtframes[$_])/${fps}),10)\:d\:1}.%{eif\:mod(round($($rtframes[$_])/${fps}*1000),1000)\:d\:3}'
+            $ststopformat = '%{eif\:mod(floor($($stframes[$_])/${fps}),10)\:d\:1}.%{eif\:mod(round($($stframes[$_])/${fps}*1000),1000)\:d\:3}'
+            if ([Math]::Floor($rts[-1] / 10)) {
+                $format = "0${format}"
+                $gtmoveformat = '%{eif\:mod(floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/10),6)\:d\:1}' + $gtmoveformat
+                $rtmoveformat = '%{eif\:mod(floor(($($starts[0])/${fps}))/10),6)\:d\:1}' + $rtmoveformat
+                $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/10),6)\:d\:1}' + $stmoveformat
+                $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/10),6)\:d\:1}' + $gtstopformat
+                $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/10),6)\:d\:1}' + $rtstopformat
+                $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/10),6)\:d\:1}' + $ststopformat
+                if ([Math]::Floor($rts[-1] / 60)) {
+                    $format = "0\:${format}"
+                    $gtmoveformat = '%{eif\:mod(floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/60),10)\:d\:1}' + $gtmoveformat
+                    $rtmoveformat = '%{eif\:mod(floor(($($starts[0])/${fps}))/60),10)\:d\:1}' + $rtmoveformat
+                    $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/60),10)\:d\:1}' + $stmoveformat
+                    $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/60),10)\:d\:1}' + $gtstopformat
+                    $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/60),10)\:d\:1}' + $rtstopformat
+                    $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/60),10)\:d\:1}' + $ststopformat
+                    if ([Math]::Floor($rts[-1] / 600)) {
+                        $format = "0${format}"
+                        $gtmoveformat = '%{eif\:mod(floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/600),6)\:d\:1}' + $gtmoveformat
+                        $rtmoveformat = '%{eif\:mod(floor(($($starts[0])/${fps}))/600),6)\:d\:1}' + $rtmoveformat
+                        $stmoveformat = '%{eif\:mod(floor((t-($($starts[$_])/${fps}))/600),6)\:d\:1}' + $stmoveformat
+                        $gtstopformat = '%{eif\:mod(floor(($($gtframes[$_])/${fps})/600),6)\:d\:1}' + $gtstopformat
+                        $rtstopformat = '%{eif\:mod(floor(($($rtframes[$_])/${fps})/600),6)\:d\:1}' + $rtstopformat
+                        $ststopformat = '%{eif\:mod(floor(($($stframes[$_])/${fps})/600),6)\:d\:1}' + $ststopformat
+                        if ([Math]::Floor($rts[-1] / 3600)) {
+                            $format = "" + ("").PadLeft(((([Math]::Floor($rts[-1] / 3600)).ToString()).Length),'0') + "\:${format}"
+                            $gtmoveformat = '%{eif\:floor((t-(($($starts[$_])-$(if ($_ -eq 0) {"0"} else {$intervals[($_ - 1)]}))/${fps}))/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $gtmoveformat
+                            $rtmoveformat = '%{eif\:floor(($($starts[0])/${fps}))/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $rtmoveformat
+                            $stmoveformat = '%{eif\:floor((t-($($starts[$_])/${fps}))/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $stmoveformat
+                            $gtstopformat = '%{eif\:floor(($($gtframes[$_])/${fps})/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $gtstopformat
+                            $rtstopformat = '%{eif\:floor(($($rtframes[$_])/${fps})/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $rtstopformat
+                            $ststopformat = '%{eif\:floor(($($stframes[$_])/${fps})/3600)\:d\:$((([Math]::Floor($rts[-1] / 3600)).ToString()).Length)}\:' + $ststopformat
                         }
                     }
                 }
-                $logtext = $logtext[0..15]
-                1..$counter | ForEach-Object {
-                    $logtext += "開始フレーム${_}: $($starts[($_ - 1)])"
-                    $logtext += "停止フレーム${_}: $($stops[($_ - 1)])"
+            }
+            $gtmoveformat = '"GT\: ' + $gtmoveformat + '"'
+            $rtmoveformat = '"RT\: ' + $rtmoveformat + '"'
+            $stmoveformat = '"ST\: ' + $stmoveformat + '"'
+            $gtstopformat = '"GT\: ' + $gtstopformat + '"'
+            $rtstopformat = '"RT\: ' + $rtstopformat + '"'
+            $ststopformat = '"ST\: ' + $ststopformat + '"'
+            
+            switch ("${row1}${row2}${row3}") {
+                "123" {
+                    #GT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($gts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #RT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($rts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #ST
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($sts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                }
+                "132" {
+                    #GT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($gts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #ST
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($sts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #RT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($rts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                }
+                "213" {
+                    #RT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($rts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #GT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($gts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #ST
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($sts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                }
+                "231" {
+                    #RT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($rts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #ST
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($sts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #GT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($gts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                }
+                "312" {
+                    #ST
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($sts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #GT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($gts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #RT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($rts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                }
+                "321" {
+                    #ST
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($sts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($stmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row1y | Invoke-Expression):text='$($ststopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #RT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($rts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row2y | Invoke-Expression):text='$($rtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
+                    #GT
+                    $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
+                    0..($gts.Count - 1) | ForEach-Object {
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtmoveformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
+                        $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=$($row3y | Invoke-Expression):text='$($gtstopformat | Invoke-Expression)':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$(if ($_ -eq ($gts.Count - 1)) {$disappearat} else {$starts[($_ + 1)]}))',"
+                    }
                 }
             }
-        } until ($isend)
-        0..($starts.Count - 1) | ForEach-Object {
-            $starts[$_] | Out-File -FilePath option.txt -Append
-            $stops[$_] | Out-File -FilePath option.txt -Append
-        }
-
-        # 非表示フレーム
+            $timertext += "null"
+            Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel -8 -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
+            do {
+                Clear-Host
+                $logtext
+                $confirm = Read-Host -Prompt "これで動画を作成しますか?(yn)`nNを選ぶとフォント選択に戻ります`nこれまでの入力はoption.txtに自動で保存されています"
+            } until ($confirm -match "^[YyNn]$")
+            if ($confirm -match "^[nN]$") {
+                $logtext = @()
+                $logtext += "入力ファイル: ${inputfilename}"
+            }
+        } until ($confirm -match "^[yY]$")
         do {
             do {
                 Clear-Host
                 $logtext
-                $disappearat = Read-Host -Prompt "タイマーを非表示にするフレーム、-1で最後のフレームを選択します"
-            } until ($disappearat -match "^(0|-1|[1-9]\d*)$")
-        } until (([int]$disappearat -gt [int]$stops[-1] -and [int]$disappearat -le $videoframes) -or $disappearat -match "^-1$")
-        $disappearat | Out-File -FilePath option.txt -Append
-        if ($disappearat -match "^-1$") {
-            $disappearat = $videoframes
-        }
-        $logtext += "非表示フレーム: ${disappearat}"
-
-        0..($starts.Count - 1) | ForEach-Object {
-            $stframes += [int]$stops[$_] - [int]$starts[$_]
-            $gtframe += $stframes[-1]
-            $gtframes += $gtframes1
-            $rtframes += [int]$stops[$_] - [int]$starts[0]
-            $interval += [int]$starts[($_ + 1)] - [int]$stops[$_]
-            $intervals += $interval
-        }
-        $sts = $stframes | ForEach-Object {
-            [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
-        }
-        $gts = $gtframes | ForEach-Object {
-            [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
-        }
-        $rts = $rtframes | ForEach-Object {
-            [Math]::Floor($_ / ($fps | Invoke-Expression), 3, 1)
-        }
-        <#tukawanaikamo
-        0..($sts.Count - 1) | ForEach-Object {
-            $sthours += [Math]::Floor($sts[$_] / 3600)
-            $stminutes += (([Math]::Floor(($sts[$_] % 3600) / 60)).ToString()).PadLeft(2,'0')
-            $stseconds += (([Math]::Floor(($sts[$_] % 60))).ToString()).PadLeft(2,'0')
-            $stmilliseconds += (([Math]::Round(($sts[$_] % 1)*1000,0,1)).ToString()).PadLeft(3,'0')
-        }
-        0..($gts.Count - 1) | ForEach-Object {
-            $gthours += [Math]::Floor($gts[$_] / 3600)
-            $gtminutes += (([Math]::Floor(($gts[$_] % 3600) / 60)).ToString()).PadLeft(2,'0')
-            $gtseconds += (([Math]::Floor(($gts[$_] % 60))).ToString()).PadLeft(2,'0')
-            $gtmilliseconds += (([Math]::Round(($gts[$_] % 1)*1000,0,1)).ToString()).PadLeft(3,'0')
-        }
-        0..($rts.Count - 1) | ForEach-Object {
-            $rthours += [Math]::Floor($rts[$_] / 3600)
-            $rtminutes += (([Math]::Floor(($rts[$_] % 3600) / 60)).ToString()).PadLeft(2,'0')
-            $rtseconds += (([Math]::Floor(($rts[$_] % 60))).ToString()).PadLeft(2,'0')
-            $rtmilliseconds += (([Math]::Round(($rts[$_] % 1)*1000,0,1)).ToString()).PadLeft(3,'0')
-        }
-        #>
-        $format = "0.000"
-        if ([Math]::Floor($rts[-1] / 10) -ge 1) {
-            $format = "0${format}"
-            if ([Math]::Floor($rts[-1] / 10) -ge 6) {
-                $format = "0\:${format}"
-                if ([Math]::Floor($rts[-1] / 10) -ge 60) {
-                    $format = "0${format}"
-                    if ([Math]::Floor($rts[-1] / 10) -ge 360) {
-                        $format = "" + ("").PadLeft(((([Math]::Floor($rts[-1] / 3600)).ToString()).Length),'0') + "\:${format}"
-                    }
-                }
+                $outputfilename=Read-Host -Prompt "拡張子なしのファイル名(拡張子には${outputextension}が付きます)"
+            } until (-not ($outputfilename -match "[\u0022\u002a\u002f\u003a\u003c\u003e\u003f\u005c\u007c]") -and ("${defaultfolder}\${filename}").Length -le 250)
+            if ((Test-Path "${defaultfolder}\${outputfilename}.${outputextension}")) {
+                do {
+                    Clear-Host
+                    $logtext
+                    Write-Host "現在のファイル名: ${defaultfolder}\${outputfilename}.${outputextension}"
+                    $confirm=Read-Host -Prompt "ファイルが既に存在します。上書きしますか?(yn)"
+                } until ($confirm -match "^[yYnN]$")
             }
+        } until (-not (Test-Path "${defaultfolder}\${outputfilename}.${outputextension}") -or $confirm -match "^[yY]$")
+        $encodinglength = Measure-Command -Expression {
+            Start-Process -FilePath "ffmpeg" -ArgumentList "-hide_banner -loglevel -8 -y -i ""${inputfilename}"" -vf ""${timertext}"" ${vencodesetting} ${aencodesetting} ""${defaultfolder}\${outputfilename}.${outputextension}""" -Wait -NoNewWindow
         }
-        "%{eif\:floor(t-($($starts[0])/${fps}))\:d}.%{eif\:mod(round((t-$($starts[0])/${fps})*1000),1000)\:d\:3}"
-        switch ("${row1}${row2}${row3}") {
-            "123" {
-                #GT
-                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: ':enable='gte(ceil(t*${fps}),$($starts[0]))*lt(ceil(t*${fps}),$($stops[0]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: %{eif\:floor(($($gtframes[0])/${fps}))\:d}.%{eif\:mod(round(($($gtframes[0])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[0]))*lt(ceil(t*${fps}),$($starts[1]))',"
-                1..($gts.Count - 2) | ForEach-Object {
-                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: %{eif\:floor(t-(($($starts[$_])-$($intervals[($_ - 1)]))/${fps}))\:d}.%{eif\:mod(round((t-(($($starts[$_])-$($intervals[($_ - 1)]))/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: %{eif\:floor(($($gtframes[$_])/${fps}))\:d}.%{eif\:mod(round(($($gtframes[$_])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$($starts[($_ + 1)]))',"
-                }
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: %{eif\:floor(t-(($($starts[-1])-$($intervals[(-1)]))/${fps}))\:d}.%{eif\:mod(round((t-$($starts[-1])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[-1]))*lt(ceil(t*${fps}),$($stops[-1]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}:text='GT\: %{eif\:floor(($($gtframes[-1])/${fps}))\:d}.%{eif\:mod(round(($($gtframes[-1])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[-1]))*lt(ceil(t*${fps}),${disappearat})',"
-                #RT
-                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${$texty}+text_h+${linespace1}:text='RT\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
-                0..($gts.Count - 2) | ForEach-Object {
-                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}:text='RT\: %{eif\:floor(t-($($starts[0])/${fps}))\:d}.%{eif\:mod(round((t-$($starts[0])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}:text='RT\: %{eif\:floor(($($rtframes[$_])/${fps}))\:d}.%{eif\:mod(round(($($rtframes[$_])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$($starts[($_ + 1)]))',"
-                }
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}:text='RT\: %{eif\:floor(t-($($starts[0])/${fps}))\:d}.%{eif\:mod(round((t-$($starts[0])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[-1]))*lt(ceil(t*${fps}),$($stops[-1]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}:text='RT\: %{eif\:floor(($($rtframes[-1])/${fps}))\:d}.%{eif\:mod(round(($($rtframes[-1])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[-1]))*lt(ceil(t*${fps}),${disappearat})',"
-                #ST
-                $timertext = "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: ${format}':enable='gte(ceil(t*${fps}),${appearat})*lt(ceil(t*${fps}),$($starts[0]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: %{eif\:floor(t-($($starts[$_])/${fps}))\:d}.%{eif\:mod(round((t-$($starts[$_])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: %{eif\:floor(($($stframes[$_])/${fps}))\:d}.%{eif\:mod(round(($($stframes[$_])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$($starts[($_ + 1)]))',"
-                1..($gts.Count - 2) | ForEach-Object {
-                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: %{eif\:floor(t-($($starts[$_])/${fps}))\:d}.%{eif\:mod(round((t-$($starts[$_])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[$_]))*lt(ceil(t*${fps}),$($stops[$_]))',"
-                    $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: %{eif\:floor(($($stframes[$_])/${fps}))\:d}.%{eif\:mod(round(($($stframes[$_])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[$_]))*lt(ceil(t*${fps}),$($starts[($_ + 1)]))',"
-                }
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: %{eif\:floor(t-($($starts[-1])/${fps}))\:d}.%{eif\:mod(round((t-$($starts[-1])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($starts[-1]))*lt(ceil(t*${fps}),$($stops[-1]))',"
-                $timertext += "drawtext=fontfile=${fontfile}:fontcolor=${textcolor1}:fontsize=${textsize1}:x=${textx}:y=${texty}+text_h+${linespace1}+${linespace2}:text='ST\: %{eif\:floor(($($stframes[-1])/${fps}))\:d}.%{eif\:mod(round(($($stframes[-1])/${fps})*1000),1000)\:d\:3}':enable='gte(ceil(t*${fps}),$($stops[-1]))*lt(ceil(t*${fps}),${disappearat})',"
-            }
-            "132" {
-                if ([Math]::Floor($rts[-1] / 10) -eq 0) { # 10秒未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 5) { # 10秒以上1分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 59) { # 1分以上10分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 359) { # 10分以上1時間未満
-                } else { # 1時間以上
-                }
-            }
-            "213" {
-                if ([Math]::Floor($rts[-1] / 10) -eq 0) { # 10秒未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 5) { # 10秒以上1分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 59) { # 1分以上10分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 359) { # 10分以上1時間未満
-                } else { # 1時間以上
-                }
-            }
-            "231" {
-                if ([Math]::Floor($rts[-1] / 10) -eq 0) { # 10秒未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 5) { # 10秒以上1分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 59) { # 1分以上10分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 359) { # 10分以上1時間未満
-                } else { # 1時間以上
-                }
-            }
-            "312" {
-                if ([Math]::Floor($rts[-1] / 10) -eq 0) { # 10秒未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 5) { # 10秒以上1分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 59) { # 1分以上10分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 359) { # 10分以上1時間未満
-                } else { # 1時間以上
-                }
-            }
-            "321" {
-                if ([Math]::Floor($rts[-1] / 10) -eq 0) { # 10秒未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 5) { # 10秒以上1分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 59) { # 1分以上10分未満
-                } elseif ([Math]::Floor($rts[-1] / 10) -le 359) { # 10分以上1時間未満
-                } else { # 1時間以上
-                }
-            }
-        }
+        Write-Host "${defaultfolder}\${outputfilename}.${outputextension}は$((($encodinglength.Hours).ToString()).PadLeft(2,'0')):$((($encodinglength.Minutes).ToString()).PadLeft(2,'0')):$((($encodinglength.Seconds).ToString()).PadLeft(2,'0')).$((($encodinglength.Milliseconds).ToString()).PadLeft(3,'0'))でエンコードしました`nEnterで終了"
+        Read-Host
+        exit
     }
 } else {
     Write-Host "現在このps1ファイルはWindowsでのみ動作します`nEnterで終了"
