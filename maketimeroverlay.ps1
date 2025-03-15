@@ -18,9 +18,6 @@ fonttools varLib.mutator filename.ttf wght=value
 [string]$vencodesetting = "-c:v libx264 -qp 21" # デフォルト: "-c:v libx264 -qp 21" フィルターをかけるので"-c:v copy"は使えない
 [string]$aencodesetting = "-c:a aac -q:a 1" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
 [string]$outputextension = "mp4" # デフォルト: "mp4" デフォルトがmp4向けのエンコード設定のため。ただし上のエンコード設定によっては変える必要あり、あとここで編集させているのはすぐ上にエンコード設定があるから
-[string]$vencodesetting = "-c:v ffv1 -level 3"
-[string]$aencodesetting = "-c:a flac"
-[string]$outputextension = "mkv"
 <#
 目的別いろんなエンコードメモ
 再生できればいいからとにかく容量を小さくしたい場合
