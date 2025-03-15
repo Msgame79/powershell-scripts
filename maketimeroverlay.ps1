@@ -8,7 +8,7 @@ URL: https://github.com/PowerShell/PowerShell/releases/latest
 必要なもの
 Python 3.13
 fonttools package
-install: pip install fonttools
+インストール: pip install fonttools
 コマンド
 fonttools varLib.mutator filename.ttf wght=value
 #>
@@ -31,7 +31,7 @@ h264+aac, mp4 container(伝統的な組み合わせで大抵のデバイスで�
 [string]$vencodesetting = "-c:v libx264 -qp 18"
 [string]$aencodesetting = "-c:a aac -q:a 1"
 [string]$outputextension = "mp4"
-VP9+Opus, webm container
+VP9+Opus, webm container(YouTubeでも使われてる)
 [string]$vencodesetting = "-c:v libvpx-vp9"
 [string]$aencodesetting = "-c:a libopus -b:a 96k"
 [string]$outputextension = "webm"
