@@ -1,5 +1,3 @@
-chcp 65001
-
 #default values
 [string]$defaultfolder = $PSScriptRoot
 [System.Object]$downloadlength = $null
@@ -154,11 +152,11 @@ do {
 $num = (Get-Content -Path ".\invalids.txt").Length
 (Get-Content -Path ".\invalids.txt") | ForEach-Object {
     $count += 1
-    Start-Process "https://ncs.io/track/download/$_"
+    Start-Process "https://ncs.io/track/download/${_}"
     do {
         Clear-Host
         "${count}/${num} ($([Math]::Round($count * 100 / $num), 2, 1)%)"
-        "URL: https://ncs.io/track/download/" + $_
+        "URL: https://ncs.io/track/download/${_}"
         $title = Read-Host -Prompt "Enter filename(Full) or skip"
     } until ($title -match "^[^ ].+\.mp3$|^skip$")
     if ($title -notmatch "^skip$") {

@@ -1,115 +1,102 @@
-chcp 65001
+# default values
+[string]$defaultfolder = "${PSScriptRoot}"
+[string]$url = ""
+[string]$uuid = ""
+[string]$title = ""
+[int]$isinvalidname =  0
+[int]$hasnoname =  0
+[int]$isfailed =  0
+[int]$iszerobyte =  0
 
-Set-Location $PSScriptRoot
-
-[bool]$flag=$false
-
-Clear-Host
-
-[string]$downloadfolder = "."
-
-"format`nhttps://ncs.io/track/download/uuid`nhttps://ncs.io/track/download/i_uuid`n"
-
-[string]$url=Read-Host -Prompt "Enter URL"
-
-if ($url -match "^https://ncs.io/track/download/[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$") {
-
-    $uuid=$url.Substring(30,36)
-
-} elseif ($url -match "^https://ncs.io/track/download/i_[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$") {
-
-    $uuid=$url.Substring(32,36)
-
+Set-Location -Path "${defaultfolder}"
+do {
+    Clear-Host
+    $url = Read-Host -Prompt "Enter URL or UUID"
+} until ($url -match "^((https?://)?(www\.)?ncs\.io/track/download/)?(i_)?([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$")
+$uuid = $Matches.5
+$title = [string]((Invoke-WebRequest -Uri "https://ncs.io/track/download/${uuid}" -Method Head).Headers["Content-Disposition"]).SubString(22,([string](Invoke-WebRequest -Uri "https://ncs.io/track/download/${uuid}" -Method Head).Headers["Content-Disposition"]).Length - 41)
+if ($title -match "[\u0080-\u00bf]") {
+    $isinvalidname = 1
+} elseif ($title.Length -eq 0) {
+    $hasnoname = 1
+}
+if ($hasnoname) {
+    Write-Host -Object "Failed to get title`n maybe you typed wrong uuid?"
 } else {
-
-    "Invalid`nEnter to exit"
-
-    Read-Host
-
-    exit
-
-}
-
-if (Test-Path "$downloadfolder\$uuid.mp3") {
-
-    "Already exists`nEnter to exit"
-
-    Read-Host
-
-    exit
-
-}
-
-Try {
-
-    Invoke-WebRequest -Uri "https://ncs.io/track/download/$uuid" -OutFile ".\temp$uuid.mp3"
-
-    $headers=Invoke-WebRequest -Uri "https://ncs.io/track/download/$uuid" -Method Head
-
-    [String]$cd=$headers.Headers["Content-Disposition"]
-
-    $title=$cd.SubString(22,$cd.Length - 41)
-
-    ffmpeg -hide_banner -loglevel -8 -y -i "temp$uuid.mp3" -metadata Title="$title" -c copy "$downloadfolder\$uuid.mp3"
-
-} Catch {
-
-    "Couldn't download`nEnter to exit"
-
-    Read-Host
-
-    exit
-
-}
-
-Do {
-
-    Try {
-
-        $flag=$true
-
-        Remove-Item -Path ".\temp$uuid.mp3"
-
-    } Catch {
-
-        $flag=$false
-
+    if (Test-Path -Path ".\musics\${uuid}.mp3") {
+        Write-Host -Object "${uuid}.mp3 already exists"
+    } else {
+        Write-Host -Object "Title: ${title}"
+        if ($isinvalidname) {
+            Write-Host -Object "Title contains invalid character(s)"
+        }
+        Invoke-RestMethod -Uri "https://ncs.io/track/download/${uuid}" -OutFile ".\musics\temp\${uuid}.mp3"
+        if (-not $?) {
+            $isfailed = 1
+        } elseif ((Get-ItemPropertyValue -Path ".\musics\temp\${uuid}.mp3" -Name "Length") -eq 0) {
+            $iszerobyte =  1
+        }
+        if ($isfailed) {
+            Write-Host -Object "Failed to download`nAn error occurred while downloading"
+        } elseif ($iszerobyte) {
+            Remove-Item -Path ".\musics\temp\${uuid}.mp3"
+            Write-Host -Object "Loaded zero-byte file`nThis file may be non-existent on server but returned with 20x`nAlready removed"
+        } else {
+            Write-Host -Object "Downloaded successfully"
+            if ($isinvalidname) {
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${uuid}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${uuid}" ".\${uuid}.mp3"
+            } else {
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${uuid}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${uuid}.mp3"
+            }
+        }
     }
-
-} until ($flag)
-
-Try {
-
-    Invoke-WebRequest -Uri "https://ncs.io/track/download/i_$uuid"-OutFile ".\tempi_$uuid.mp3"
-
-    ffmpeg -hide_banner -loglevel -8 -y -i "tempi_$uuid.mp3" -metadata Title="$title (Instrumental)" -c copy "$downloadfolder\i_$uuid.mp3"
-
-} Catch {
-
-    "Instrumental does not exist(not a error)`nEnter to exit"
-
-    Read-Host
-
-    exit
-
-}
-
-Do {
-
-    Try {
-
-        $flag=$true
-
-        Remove-Item -Path ".\tempi_$uuid.mp3"
-
-    } Catch {
-
-        $flag=$false
-
+    $isfailed =  0
+    $iszerobyte =  0
+    if (Test-Path -Path ".\musics\i_${uuid}.mp3") {
+        Write-Host -Object "i_${uuid}.mp3 already exists"
+    } else {
+        Write-Host -Object "Title: ${title} (Instrumental)"
+        if ($isinvalidname) {
+            Write-Host -Object "Title contains invalid character(s)"
+        }
+        Invoke-RestMethod -Uri "https://ncs.io/track/download/i_${uuid}" -OutFile ".\musics\temp\i_${uuid}.mp3"
+        if (-not $?) {
+            $isfailed = 1
+        } elseif ((Get-ItemPropertyValue -Path ".\musics\temp\i_${uuid}.mp3" -Name "Length") -eq 0) {
+            $iszerobyte =  1
+        }
+        if ($isfailed) {
+            Write-Host -Object "Failed to download`nAn error occurred while downloading"
+        } elseif ($iszerobyte) {
+            Remove-Item -Path ".\musics\temp\i_${uuid}.mp3"
+            Write-Host -Object "Loaded zero-byte file`nThis file may be non-existent on server but returned with 20x`nAlready removed"
+        } else {
+            Write-Host -Object "Downloaded successfully"
+            if ($isinvalidname) {
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${uuid}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${uuid} (Instrumental)" ".\i_${uuid}.mp3"
+            } else {
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${uuid}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\i_${uuid}.mp3"
+            }
+        }
     }
-
-} until ($flag)
-
-"Downloaded successfully`nEnter to exit"
-
+    if ($isinvalidname) {
+        Get-ChildItem -Name | Where-Object {$_ -match "^(i_)?[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp3$"} | ForEach-Object {
+            do {
+                Clear-Host
+                "URL: https://ncs.io/track/download/$($_.SubString(0, ($_.Length - 4)))"
+                $title = Read-Host -Prompt "Enter filename(Full) or skip"
+            } until ($title -match "^[^ ].+\.mp3$|^skip$")
+        }
+        if ($title -notmatch "^skip$") {
+            $title = $title.Substring(0, $title.Length - 18)
+            if ($_ -match "^i_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\$($_.SubString(0, ($_.Length - 4))).mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\$($_.SubString(0, ($_.Length - 4))).mp3"
+            } else {
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\$($_.SubString(0, ($_.Length - 4))).mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\$($_.SubString(0, ($_.Length - 4))).mp3"
+            }
+        }
+    }
+}
+Write-Host -Object "Enter to exit"
 Read-Host
+exit
