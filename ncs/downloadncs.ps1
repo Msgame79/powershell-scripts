@@ -50,10 +50,10 @@ if ((Get-Content ".\uuids.txt" | Sort-Object | Get-Unique).Count -lt (Get-Conten
     Read-Host
     exit
 }
-New-Item -ItemType Directory -Path ".\musics"
-New-Item -ItemType Directory -Path ".\musics\temp"
-New-Item -ItemType Directory -Path ".\log.txt"
-New-Item -ItemType Directory -Path ".\invalids.txt"
+New-Item -ItemType Directory -Path ".\musics" | Out-Null
+New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
+New-Item -ItemType File -Path ".\log.txt" | Out-Null
+New-Item -ItemType File -Path ".\invalids.txt" | Out-Null
 Write-Host "Open log.txt in vscode to wacth log"
 $downloadlength = Measure-Command -Expression {
     Get-Content .\uuids.txt | Foreach-Object -ThrottleLimit 10 -Parallel {
