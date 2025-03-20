@@ -163,5 +163,10 @@ if (Test-Path ".\invalids") {
         Remove-Item -Recurse -Force ".\invalids"
     } until (-not (Test-Path ".\invalids"))
 }
+if (Test-Path ".\invalids.txt") {
+    do {
+        Remove-Item -Force ".\invalids.txt"
+    } until (-not (Test-Path ".\invalids.txt"))
+}
 Read-Host
 exit
