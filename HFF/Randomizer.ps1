@@ -1,3 +1,4 @@
+# 日本語環境のPowerShell 5.1で使う際にはShift-JISで保存してください
 # 編集可能な変数
 [string]$outputfilename = "" # テキストファイル(UTF-8 Without BOM)に書き込む場合はフルパスで指定(拡張子.txtも忘れずに書く、拡張子がない場合は書き込みません)
 [array]$levellist = @( # ステージ一覧
@@ -32,19 +33,23 @@
     "Hike"
     "Candyland"#>
 )
-[uint]$levelnumber = $levellist.Count # $levellist.Count($levellistの個数)で全てをシャッフル、$levellistの個数を越えた値でも全てをシャッフル
+[int]$levelnumber = $levellist.Count # $levellist.Count($levellistの個数)で全てをシャッフル、$levellistの個数を越えた値でも全てをシャッフル
 
 # 編集不可能な変数
 [array]$numlist = @()
 [string]$lvlstring = ""
-[uint]$counter = 1
+[int]$counter = 1
 
 # スクリプトの始まり
-chcp 65001
 $ErrorActionPreference = 'continue'
 # 無限ループ
 if ($levellist.Count -eq 0) {
     Write-Host -Object "`$levellistが空です`nEnterで終了"
+    Read-Host
+    exit
+}
+if ($levelnumber -le 0) {
+    Write-Host -Object "`$levelnumberに0以下の整数が入っています`nEnterで終了"
     Read-Host
     exit
 }
