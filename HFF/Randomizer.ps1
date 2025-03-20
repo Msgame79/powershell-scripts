@@ -36,12 +36,12 @@
 
 # 編集不可能な変数
 [array]$numlist = @()
-[array]$lvllist = @()
+[string]$lvlstring = ""
 [uint]$counter = 1
 
 # スクリプトの始まり
 chcp 65001
-$ErrorActionPreference = 'Inquire'
+$ErrorActionPreference = 'continue'
 # 無限ループ
 if ($levellist.Count -eq 0) {
     Write-Host -Object "`$levellistが空です`nEnterで終了"
@@ -49,6 +49,7 @@ if ($levellist.Count -eq 0) {
     exit
 }
 while (1) {
+    Clear-Host
     # $numlistの配列は整数値で取得
     if ($PSVersionTable.PSVersion.Major -ge 7 -and $PSVersionTable.PSVersion.Minor -ge 4) {
         $numlist = 1..$levellist.Count | Get-SecureRandom -Count $levelnumber
@@ -56,14 +57,22 @@ while (1) {
         $numlist = 1..$levellist.Count | Get-Random -Count $levelnumber
     }
     $counter = 1
+    $lvlstring = ""
     $numlist | ForEach-Object {
-        $lvllist += "$(([string]$counter).PadLeft((($numlist.Count).ToString()).Length," ")). $($levellist[($_ - 1)])"
+        $lvlstring += "$(([string]$counter).PadLeft((($numlist.Count).ToString()).Length," ")). $($levellist[($_ - 1)])$(if ($counter -lt $numlist.Count) {"`n"} else {})"
         $counter++
     }
-    if ($outputfilename.Substring(($outputfilename.Length - 4), 4) -eq ".txt") {
-        New-Item -Type "File" -Value $lvllist -Path "${outputfilename}" | Out-Null
+    try {
+        if ($outputfilename.Substring(($outputfilename.Length - 4), 4) -eq ".txt") {
+            if (Test-Path -Path "${outputfilename}") {
+                do {
+                    Remove-Item -Path "${outputfilename}"
+                } until (-not (Test-Path -Path "${outputfilename}"))
+            }
+            New-Item -Type "File" -Value "$lvlstring" -Path "${outputfilename}" | Out-Null
+        }
     }
-    Write-Host -Object $lvllist
-    Write-Host -Object "Enterで再抽選、Ctrl+CやAlt+F4で終了"
+    catch {}
+    Write-Host -Object "${lvlstring}`nEnterで再抽選、Ctrl+CやAlt+F4で終了"
     Read-Host
 }
