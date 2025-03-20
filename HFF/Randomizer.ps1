@@ -57,12 +57,13 @@ while (1) {
     }
     $counter = 1
     $numlist | ForEach-Object {
-        $lvllist += "$(([string]$counter).PadLeft((($numlist.Count).ToString()).Length," ")): $($levellist[($_ - 1)])"
+        $lvllist += "$(([string]$counter).PadLeft((($numlist.Count).ToString()).Length," ")). $($levellist[($_ - 1)])"
         $counter++
     }
     if ($outputfilename.Substring(($outputfilename.Length - 4), 4) -eq ".txt") {
-        $lvllist | Out-File -FilePath "${outputfilename}"
+        New-Item -Type "File" -Value $lvllist -Path "${outputfilename}" | Out-Null
     }
-    $lvllist
+    Write-Host -Object $lvllist
+    Write-Host -Object "Enterで再抽選、Ctrl+CやAlt+F4で終了"
     Read-Host
 }
