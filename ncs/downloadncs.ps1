@@ -140,7 +140,7 @@ $downloadlength = Measure-Command -Expression {
             }
         }
         $logtext += ""
-        $logtext | Out-File -FilePath ".\log.txt"
+        $logtext | Out-File -FilePath ".\log.txt" -Append
     }
 }
 Write-Host "All files downloaded in $((($downloadlength.Hours).ToString()).PadLeft(2,'0')):$((($downloadlength.Minutes).ToString()).PadLeft(2,'0')):$((($downloadlength.Seconds).ToString()).PadLeft(2,'0')).$((($downloadlength.Milliseconds).ToString()).PadLeft(3,'0'))"
