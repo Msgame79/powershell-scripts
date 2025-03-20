@@ -9,6 +9,23 @@
 [int]$iszerobyte =  0
 
 Set-Location -Path "${defaultfolder}"
+
+if (-not (Test-Path ".\musics")) {
+    """musics"" folder not found`nEnter to exit"
+    exit
+}
+if (Test-Path ".\musics\temp") {
+    do {
+        Remove-Item -Recurse -Force ".\musics\temp"
+    } until (-not (Test-Path ".\musics\temp"))
+}
+if (Test-Path ".\invalids") {
+    do {
+        Remove-Item -Recurse -Force ".\invalids"
+    } until (-not (Test-Path ".\invalids"))
+}
+New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
+New-Item -ItemType Directory -Path ".\invalids" | Out-Null
 do {
     Clear-Host
     $url = Read-Host -Prompt "Enter URL or UUID"
@@ -44,7 +61,7 @@ if ($hasnoname) {
         } else {
             Write-Host -Object "Downloaded successfully"
             if ($isinvalidname) {
-                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${uuid}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${uuid}" ".\${uuid}.mp3"
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${uuid}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${uuid}" ".\invalids\${uuid}.mp3"
             } else {
                 ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${uuid}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${uuid}.mp3"
             }
@@ -73,14 +90,14 @@ if ($hasnoname) {
         } else {
             Write-Host -Object "Downloaded successfully"
             if ($isinvalidname) {
-                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${uuid}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${uuid} (Instrumental)" ".\i_${uuid}.mp3"
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${uuid}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${uuid} (Instrumental)" ".\invalids\i_${uuid}.mp3"
             } else {
                 ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${uuid}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\i_${uuid}.mp3"
             }
         }
     }
     if ($isinvalidname) {
-        Get-ChildItem -Name | Where-Object {$_ -match "^(i_)?[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp3$"} | ForEach-Object {
+        Get-ChildItem -Name -Path ".\invalids" | Where-Object {$_ -match "^(i_)?[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp3$"} | ForEach-Object {
             do {
                 Clear-Host
                 "URL: https://ncs.io/track/download/$($_.SubString(0, ($_.Length - 4)))"
@@ -90,12 +107,20 @@ if ($hasnoname) {
         if ($title -notmatch "^skip$") {
             $title = $title.Substring(0, $title.Length - 18)
             if ($_ -match "^i_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
-                ffmpeg -hide_banner -loglevel -8 -vn -i ".\$($_.SubString(0, ($_.Length - 4))).mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\$($_.SubString(0, ($_.Length - 4))).mp3"
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\invalids\${_}" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\${_}"
             } else {
-                ffmpeg -hide_banner -loglevel -8 -vn -i ".\$($_.SubString(0, ($_.Length - 4))).mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\$($_.SubString(0, ($_.Length - 4))).mp3"
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\invalids\${_}" -map "0:0" -c copy -metadata title="${title}" ".\musics\${_}"
             }
         }
     }
+}
+do {
+    Remove-Item -Recurse -Force ".\musics\temp"
+} until (-not (Tes-Path ".\musics\temp"))
+if (Test-Path ".\invalids") {
+    do {
+        Remove-Item -Recurse -Force ".\invalids"
+    } until (-not (Test-Path ".\invalids"))
 }
 Write-Host -Object "Enter to exit"
 Read-Host

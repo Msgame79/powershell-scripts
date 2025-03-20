@@ -168,5 +168,6 @@ if (Test-Path ".\invalids.txt") {
         Remove-Item -Force ".\invalids.txt"
     } until (-not (Test-Path ".\invalids.txt"))
 }
+Write-Host -Object "Done`nEnter to exit"
 Read-Host
 exit
