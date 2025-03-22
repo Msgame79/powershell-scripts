@@ -58,14 +58,6 @@ Get-Content
 #>
 
 <#
-文字エンコードの指定
-932:Windows 932(Shift-JISと互換、cmdとWindows PowerShell(5.1)のデフォルト)
-65001:UTF-8(世界共通の規格で最も推奨、PowerShell Coreのデフォルト)
-1200:UTF-16(バイト数多め)
-#>
-chcp 65001
-
-<#
 エラーメッセージの処理
 Continue(デフォルト):表示しつつ続ける
 SilentlyContinue:表示せずに続ける
@@ -73,7 +65,7 @@ SilentlyContinue:表示せずに続ける
 $ErrorActionPreference = 'Continue'
 
 # 使う変数の初期値(これを書くことで編集を容易にできる)
-# 同時に型を指定すると何を入れればいいのか明瞭になる
+# 同時に型を指定すると何を入れればいいのか明確になる
 [string]$DefaultDirectory = $PSScriptRoot
 
 # 関数一覧
