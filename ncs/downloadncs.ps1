@@ -88,7 +88,7 @@ $downloadlength = Measure-Command -Expression {
             if (-not (Test-Path -Path ".\musics\temp\${_}.mp3")) {
                 $logtext += "Failed to download"
                 $logtext += "An error occurred while downloading"
-            } elseif ((Get-ItemPropertyValue -Path ".\musics\temp\${_}.mp3" -Name "Length") -eq 0) {
+            } elseif ((Get-ChildItem ".\musics\temp\${_}.mp3").Length -eq 0) {
                 Remove-Item -Path ".\musics\temp\${_}.mp3"
                 $logtext += "Loaded zero-byte file"
                 $logtext += "This file may be non-existent on server"
@@ -104,7 +104,7 @@ $downloadlength = Measure-Command -Expression {
             }
             Invoke-RestMethod -Uri "https://ncs.io/track/download/i_${_}" -OutFile ".\musics\temp\i_${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\i_${_}.mp3")) {
-            } elseif ((Get-ItemPropertyValue -Path ".\musics\temp\i_${_}.mp3" -Name "Length") -eq 0) {
+            } elseif ((Get-ChildItem ".\musics\temp\i_${_}.mp3").Length -eq 0) {
                 $logtext += "URL: https://ncs.io/track/download/i_${_}"
                 $logtext += "Title: ${title} (Instrumental)"
                 if ($isinvalidname) {
@@ -168,6 +168,7 @@ if (Test-Path ".\invalids.txt") {
         Remove-Item -Force ".\invalids.txt"
     } until (-not (Test-Path ".\invalids.txt"))
 }
+Get-ChildItem -Path ".\musics" | Where-Object {$_.Length -eq 0} | Remove-Item
 Write-Host -Object "Done`nEnter to exit"
 Read-Host
 exit
