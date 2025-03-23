@@ -1,4 +1,3 @@
-chcp 65001
 $ErrorActionPreference = 'SilentlyContinue'
 <#
 このps1ファイルはバージョン6以降で動作します。versioncheckが使用できないのでここに書きますがPowerShellのバージョン6以降をGitHubかMSStoreより入手してください。
@@ -105,7 +104,6 @@ VP9(lissless)+Opus(非可逆圧縮だがWebm側が可逆圧縮の音声コーデ
 [array]$sts = @()
 [array]$gts = @()
 [array]$rts = @()
-
 
 ffmpeg -version | Out-Null
 if (-not $?) {
