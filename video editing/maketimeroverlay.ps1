@@ -143,7 +143,7 @@ do {
 } until ($inputfilename -in $inputfilelist)
 $logtext += "入力ファイル: ${inputfilename}"
 $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
-$videoframes = ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames"
+$videoframes = (ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames" | Invoke-Expression)
 Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=y_align=font:fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:ceil(t*${fps})\:u\:0}'""" -NoNewWindow
 
 # モード選択
@@ -522,7 +522,7 @@ if ($mode -match "^1$") { # ILs
                         $logtext
                         $starts += Read-Host -Prompt "タイマーを始めるフレーム(読み込み時のフリーズから動き出したフレーム)"
                     } until ($starts[0] -match "^([1-9]\d*)$")
-                } until ($starts[0] -le $videoframes)
+                } until ([int]$starts[0] -le $videoframes)
                 $logtext += "開始フレーム1: $($starts[0])"
                 do {
                     do {
@@ -532,7 +532,7 @@ if ($mode -match "^1$") { # ILs
                         $stops += Read-Host -Prompt "タイマーを止めるフレーム(ロード中が表示されたフレーム)"
                     } until ($stops[0] -match "^([1-9]\d*)$")
                 } until ([int]$stops[0] -le $videoframes -and [int]$stops[0] -gt [int]$starts[0])
-                $logtext += "停止フレーム1: $($starts[0])"
+                $logtext += "停止フレーム1: $($stops[0])"
                 $counter += 1
             } else {
                 do {
@@ -569,7 +569,7 @@ if ($mode -match "^1$") { # ILs
                                     }
                                     default {
                                         if ([int]$stops[-1] -gt [int]$starts[-1]) {
-                                            $logtext += "停止フレーム$($counter): $($starts[-1])"
+                                            $logtext += "停止フレーム$($counter): $($stops[-1])"
                                             $counter += 1
                                             $flag1 = 1
                                         }
@@ -579,10 +579,12 @@ if ($mode -match "^1$") { # ILs
                         }
                     }
                 }
-                $logtext = $logtext[0..16]
-                1..($counter - 1) | ForEach-Object {
-                    $logtext += "開始フレーム${_}: $($starts[($_ - 1)])"
-                    $logtext += "停止フレーム${_}: $($stops[($_ - 1)])"
+                $logtext = $logtext[0..17]
+                if ($counter -ge 2) {
+                    1..($counter - 1) | ForEach-Object {
+                        $logtext += "開始フレーム${_}: $($starts[($_ - 1)])"
+                        $logtext += "停止フレーム${_}: $($stops[($_ - 1)])"
+                    }
                 }
             }
         } until ($isend)
