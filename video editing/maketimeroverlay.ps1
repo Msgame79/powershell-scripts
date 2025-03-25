@@ -135,7 +135,7 @@ if ($IsWindows) {
        Read-Host
        exit
     }
-    $logtext += "でかでかと書きたかった注`nSpeedrun.comのルール(https://www.speedrun.com/ja-JP/hff?rules=game)により`nPCの場合フルランはオートスプリッターを使わない限りRTとGTが一緒になるしコンソールとモバイルもモデレーターによるリタイムは回避できないのでここで得られたタイムは`n`n""""""""参  考  程  度""""""""`n`nに留めてください"
+    $logtext += "でかでかと書きたかった注`n`nSpeedrun.comのルール(https://www.speedrun.com/ja-JP/hff?rules=game)により`nPCの場合フルランはオートスプリッターを使わない限りRTとGTが一緒になるしコンソールとモバイルもモデレーターによるリタイムは回避できないのでここで得られたタイムは`n`n""""""""参  考  程  度""""""""`n`nに留めてください`n"
     do {
         Clear-Host
         $logtext
