@@ -1,5 +1,6 @@
 chcp 65001
 
+[string]$directory = $PSScriptRoot
 [string]$size = ""
 [string]$pad = ""
 [string]$text = ""
@@ -9,7 +10,9 @@ chcp 65001
 [int]$minimum = 80 # can edit
 [int]$maximum = 540 # can edit
 
+Set-Location $directory
 do {
+    Clear-Host
     do {
         do {
             $size = Read-Host -Prompt "size between ${minimum} and ${maximum}"
