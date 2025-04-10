@@ -14,8 +14,8 @@ fonttools varLib.mutator filename.ttf wght=value
 
 # 変数一覧(変更可能)
 [string]$defaultfolder = "$PSScriptRoot" # デフォルト: $PSScriptRoot
-[string]$vencodesetting = "-c:v libx264 -crf 21" # デフォルト: "-c:v libx264 -crf 21" キーフレームで常にトリミングを開始する(もしくはGOPを0にしている)なら"-c:v copy"でも良い
-[string]$aencodesetting = "-c:a aac -q:a 1" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
+[string]$vencodesetting = "-c:v copy" # デフォルト: "-c:v libx264 -crf 21" キーフレームで常にトリミングを開始する(もしくはGOPを0にしている)なら"-c:v copy"でも良い
+[string]$aencodesetting = "-c:a copy" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
 [string]$outputextension = "mp4" # デフォルト: "mp4" デフォルトがmp4向けのエンコード設定のため。ただし上のエンコード設定によっては変える必要あり、あとここで編集させているのはすぐ上にエンコード設定があるから
 <#
 目的別いろんなエンコードメモ
@@ -139,6 +139,8 @@ do {
                     $endtime = $starttime + 1
                 }
             } until ($endtime -gt $starttime -or $endat -eq "c")
+        } else {
+            Stop-Process -Id $ffplay
         }
     } until ($endtime -ge 0 -or $startat -eq "c")
 } until ($starttime -ge 0)
@@ -154,6 +156,7 @@ do {
         } until ($confirm -match "^[yYnN]$")
     }
 } until (-not (Test-Path "${defaultfolder}\${outputfilename}.${outputextension}") -or $confirm -match "^[yY]$")
+Stop-Process -Id $ffplay
 Clear-Host
 Write-Host "動画ファイルを選択: ${inputfilename}`nトリミング開始時間`nffplayと同じ秒.小数秒または時間:分:秒.小数秒で書く`ncで一つ戻る、0で最初から: ${startat}`nトリミング終了時間`nffplayと同じ秒.小数秒または時間:分:秒.小数秒で書く`ncで一つ戻る、-1で最後まで: ${endat}`n拡張子なしのファイル名(拡張子には${outputextension}が付きます): ${outputfilename}`n${defaultfolder}\${outputfilename}.${outputextension}を作成中..."
 $encodinglength = Measure-Command -Expression {
