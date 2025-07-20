@@ -14,7 +14,7 @@ fonttools varLib.mutator filename.ttf wght=value
 
 # 変数一覧(変更可能)
 [string]$defaultfolder = "$PSScriptRoot" # デフォルト: $PSScriptRoot
-[string]$vencodesetting = "-c:v libx264 -crf 21" # デフォルト: "-c:v libx264 -crf 21" フィルターをかけるので"-c:v copy"は使えない
+[string]$vencodesetting = "-c:v h264_nvenc -qp 18" # デフォルト: "-c:v libx264 -crf 21" フィルターをかけるので"-c:v copy"は使えない
 [string]$aencodesetting = "-c:a aac -q:a 1" # デフォルト: "-c:a aac -q:a 1" デフォルトではあえて再エンコードするように書いているが、できるなら"-c:a copy"が良い
 [string]$outputextension = "mp4" # デフォルト: "mp4" デフォルトがmp4向けのエンコード設定のため。ただし上のエンコード設定によっては変える必要あり、あとここで編集させているのはすぐ上にエンコード設定があるから
 <#
@@ -125,7 +125,7 @@ if (-not $?) {
     Read-Host
     exit
 }
-ffmpeg -loglevel error -f lavfi -r 1 -i avsynctest[out0][out1] -t 1 $vencodesetting $aencodesetting -f null -
+Start-Process "ffmpeg" "-loglevel error -f lavfi -r 1 -i avsynctest[out0][out1] -t 1 $vencodesetting $aencodesetting -f null -" -Wait -NoNewWindow
 if ($?) {} else {
     Write-Host "ffmpegのパラメータが間違っています`nEnterで終了"
     Read-Host
@@ -152,18 +152,18 @@ $logtext += "入力ファイル: ${inputfilename}"
 $fps = ffprobe -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=r_frame_rate"
 $videoframes = ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_frames"
 if ($?) {} else {
-    $videoframes = ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=nb_read_frames" -count_frames
+    $videoframes = Start-Process "ffprobe" "-hide_banner -i ""${inputfilename}"" -loglevel 0 -select_streams v -of ""default=nw=1:nk=1"" -show_entries ""stream=nb_read_frames"" -count_frames" -Wait -NoNewWindow
 }
-if ($videoframes -ne ("($(ffprobe -hide_banner -i inputt.mp4 -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=avg_frame_rate") * $(ffprobe -hide_banner -i inputt.mp4 -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=duration"))" | Invoke-Expression)) {
+if ($videoframes -ne [Math]::Round(("($(ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=avg_frame_rate") * $(ffprobe -hide_banner -i "${inputfilename}" -loglevel 0 -select_streams v -of "default=nw=1:nk=1" -show_entries "stream=duration"))" | Invoke-Expression))) {
     "フレームが等間隔でないため再エンコードを行います"
     do {
         $guid = (New-Guid).Guid
     } until (-not (Test-Path "${guid}.$([System.IO.Path]::GetExtension($inputfilename).TrimStart('.'))"))
-    ffmpeg -loglevel -8 -i "${inputfilename}" $vencodesetting $aencodesetting -r $fps "${guid}.$([System.IO.Path]::GetExtension($inputfilename).TrimStart('.'))"
+    Start-Process "ffmpeg" "-loglevel -8 -i ""${inputfilename}"" $vencodesetting $aencodesetting -r $fps ""${guid}.$([System.IO.Path]::GetExtension($inputfilename).TrimStart('.'))""" -Wait -NoNewWindow
     Remove-Item $inputfilename
     Rename-item "${guid}.$([System.IO.Path]::GetExtension($inputfilename).TrimStart('.'))" $inputfilename
 }
-Start-Process -FilePath "ffplay" -ArgumentList "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=y_align=font:fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:round(t*${fps})\:u\:0}'""" -NoNewWindow
+Start-Process "ffplay" "-fs -hide_banner -loglevel -8 -window_title ""フレーム確認"" -loop 0 -i ""${inputfilename}"" -vf ""pad=w=iw:h=ih+75:x=0:y=75,drawtext=y_align=font:fontsize=70:fontcolor=white:y_align=font:fontfile=c\\:/Windows/Fonts/cour.ttf:text='Frames\: %{eif\:round(t*${fps})\:u\:0}'""" -NoNewWindow
 
 # モード選択
 do {
@@ -331,7 +331,7 @@ if ($mode -match "^1$") { # ILs
     } until (-not (Test-Path "${defaultfolder}\${outputfilename}.${outputextension}") -or $confirm -match "^[yY]$")
     "${defaultfolder}\${outputfilename}.${outputextension}を作成中..."
     $encodinglength = Measure-Command -Expression {
-        Start-Process -FilePath "ffmpeg" -ArgumentList "-hide_banner -loglevel -8 -y -i ""${inputfilename}"" -vf ""${timertext}"" ${vencodesetting} ${aencodesetting} ""${defaultfolder}\${outputfilename}.${outputextension}""" -Wait -NoNewWindow
+        Start-Process "ffmpeg" "-hide_banner -loglevel -8 -y -i ""${inputfilename}"" -vf ""${timertext}"" ${vencodesetting} ${aencodesetting} ""${defaultfolder}\${outputfilename}.${outputextension}""" -Wait -NoNewWindow
     }
     Write-Host "${defaultfolder}\${outputfilename}.${outputextension}は$((($encodinglength.Hours).ToString()).PadLeft(2,'0')):$((($encodinglength.Minutes).ToString()).PadLeft(2,'0')):$((($encodinglength.Seconds).ToString()).PadLeft(2,'0')).$((($encodinglength.Milliseconds).ToString()).PadLeft(3,'0'))でエンコードしました`nEnterで終了"
     Read-Host
@@ -829,7 +829,7 @@ if ($mode -match "^1$") { # ILs
             }
         }
         $timertext += "null"
-        Start-Process -FilePath "ffplay" -ArgumentList "-hide_banner -loglevel error -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
+        Start-Process "ffplay" "-hide_banner -loglevel error -window_title ""プレビュー"" -loop 0 -i ""${inputfilename}"" -vf ""${timertext}""" -NoNewWindow
         do {
             Clear-Host
             $logtext
@@ -857,7 +857,7 @@ if ($mode -match "^1$") { # ILs
     } until (-not (Test-Path "${defaultfolder}\${outputfilename}.${outputextension}") -or $confirm -match "^[yY]$")
     "${defaultfolder}\${outputfilename}.${outputextension}を作成中..."
     $encodinglength = Measure-Command -Expression {
-        Start-Process -FilePath "ffmpeg" -ArgumentList "-hide_banner -loglevel -8 -y -i ""${inputfilename}"" -vf ""${timertext}"" ${vencodesetting} ${aencodesetting} ""${defaultfolder}\${outputfilename}.${outputextension}""" -Wait -NoNewWindow
+        Start-Process "ffmpeg" "-hide_banner -loglevel -8 -y -i ""${inputfilename}"" -vf ""${timertext}"" ${vencodesetting} ${aencodesetting} ""${defaultfolder}\${outputfilename}.${outputextension}""" -Wait -NoNewWindow
     }
     Write-Host "${defaultfolder}\${outputfilename}.${outputextension}は$((($encodinglength.Hours).ToString()).PadLeft(2,'0')):$((($encodinglength.Minutes).ToString()).PadLeft(2,'0')):$((($encodinglength.Seconds).ToString()).PadLeft(2,'0')).$((($encodinglength.Milliseconds).ToString()).PadLeft(3,'0'))でエンコードしました`nEnterで終了"
     Read-Host
