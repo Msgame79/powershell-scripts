@@ -2,8 +2,6 @@
 [string]$defaultfolder = $PSScriptRoot
 [System.Object]$downloadlength = $null
 [string]$title = ""
-[int]$num = 0
-[int]$count = 0
 $ErrorActionPreference = 'SilentlyContinue'
 
 if ($PSVersionTable.PSVersion.Major -lt 7) {
@@ -57,20 +55,16 @@ if ((Get-Content ".\uuids.txt" | Sort-Object | Get-Unique).Count -lt (Get-Conten
 }
 New-Item -ItemType Directory -Path ".\musics" | Out-Null
 New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
-New-Item -ItemType Directory -Path ".\invalids" | Out-Null
 New-Item -ItemType File -Path ".\log.txt" | Out-Null
 New-Item -ItemType File -Path ".\invalids.txt" | Out-Null
 Write-Host "Open log.txt on vscode to wacth log"
 $downloadlength = Measure-Command -Expression {
     Get-Content .\uuids.txt | Foreach-Object -ThrottleLimit 10 -Parallel {
         [string]$title = ""
-        [int]$isinvalidname =  0
         [int]$hasnoname =  0
         [array]$logtext = @()
-        $title = [string]((Invoke-WebRequest -Uri "https://ncs.io/track/download/${_}" -Method Head).Headers["Content-Disposition"]).SubString(22,([string](Invoke-WebRequest -Uri "https://ncs.io/track/download/${_}" -Method Head).Headers["Content-Disposition"]).Length - 41)
-        if ($title -match "[\u0080-\u00bf]") {
-            $isinvalidname = 1
-        } elseif ($title.Length -eq 0) {
+        $title = [System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding("iso-8859-1").GetBytes((Invoke-WebRequest -URI "https://ncs.io/track/download/${_}" -Method Head).Headers["Content-Disposition"]))
+        if ($title.Length -eq 0) {
             $hasnoname = 1
         }
         $logtext += "UUID: ${_}"
@@ -81,9 +75,6 @@ $downloadlength = Measure-Command -Expression {
             $logtext += "Nothing downloaded"
         } else {
             $logtext += "Title: ${title}"
-            if ($isinvalidname) {
-                $logtext += "Title contains invalid character(s)"
-            }
             Invoke-RestMethod -Uri "https://ncs.io/track/download/${_}" -OutFile ".\musics\temp\${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\${_}.mp3")) {
                 $logtext += "Failed to download"
@@ -95,21 +86,13 @@ $downloadlength = Measure-Command -Expression {
                 $logtext += "Already removed"
             } else {
                 $logtext += "Downloaded successfully"
-                if ($isinvalidname) {
-                    "${_}" | Out-File -FilePath ".\invalids.txt" -Append
-                    ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${_}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${_}" ".\invalids\${_}.mp3"
-                } else {
-                    ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${_}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${_}.mp3"
-                }
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${_}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${_}.mp3"
             }
             Invoke-RestMethod -Uri "https://ncs.io/track/download/i_${_}" -OutFile ".\musics\temp\i_${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\i_${_}.mp3")) {
             } elseif ((Get-ChildItem ".\musics\temp\i_${_}.mp3").Length -eq 0) {
                 $logtext += "URL: https://ncs.io/track/download/i_${_}"
                 $logtext += "Title: ${title} (Instrumental)"
-                if ($isinvalidname) {
-                    $logtext += "Title contains invalid character(s)"
-                }
                 Remove-Item -Path ".\musics\temp\i_${_}.mp3"
                 $logtext += "Loaded zero-byte file"
                 $logtext += "This file may be non-existent on server"
@@ -117,16 +100,8 @@ $downloadlength = Measure-Command -Expression {
             } else {
                 $logtext += "URL: https://ncs.io/track/download/i_${_}"
                 $logtext += "Title: ${title} (Instrumental)"
-                if ($isinvalidname) {
-                    $logtext += "Title contains invalid character(s)"
-                }
                 $logtext += "Downloaded successfully"
-                if ($isinvalidname) {
-                    "i_${_}" | Out-File -FilePath ".\invalids.txt" -Append
-                    ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${_}.mp3" -map "0:0" -c copy -metadata title="Invalid title ${_} (Instrumental)" ".\invalids\i_${_}.mp3"
-                } else {
-                    ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${_}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\i_${_}.mp3"
-                }
+                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${_}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" "2.\musics\i_${_}.mp3"
             }
         }
         $logtext += ""
@@ -137,37 +112,6 @@ $downloadlength = Measure-Command -Expression {
 do {
     Remove-Item -Recurse -Force ".\musics\temp"
 } until (-not (Tes-Path ".\musics\temp"))
-
-# Download invlaids
-$num = (Get-Content -Path ".\invalids.txt").Length
-(Get-Content -Path ".\invalids.txt") | ForEach-Object {
-    $count += 1
-    Start-Process "https://ncs.io/track/download/${_}"
-    do {
-        Clear-Host
-        "${count}/${num} ($([Math]::Round($count * 100 / $num, 2, 1))%)"
-        "URL: https://ncs.io/track/download/${_}"
-        $title = Read-Host -Prompt "Enter filename(Full) or skip"
-    } until ($title -match "^[^ ].+\.mp3$|^skip$")
-    if ($title -notmatch "^skip$") {
-        $title = $title.Substring(0, $title.Length - 18)
-        if ($_ -match "^i_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
-            ffmpeg -hide_banner -loglevel -8 -vn -i ".\invalids\${_}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\${_}.mp3"
-        } else {
-            ffmpeg -hide_banner -loglevel -8 -vn -i ".\invalids\${_}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${_}.mp3"
-        }
-    }
-}
-if (Test-Path ".\invalids") {
-    do {
-        Remove-Item -Recurse -Force ".\invalids"
-    } until (-not (Test-Path ".\invalids"))
-}
-if (Test-Path ".\invalids.txt") {
-    do {
-        Remove-Item -Force ".\invalids.txt"
-    } until (-not (Test-Path ".\invalids.txt"))
-}
 Get-ChildItem -Path ".\musics" | Where-Object {$_.Length -eq 0} | Remove-Item
 Write-Host -Object "Done`nEnter to exit"
 Read-Host
