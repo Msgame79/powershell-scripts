@@ -1,7 +1,6 @@
 #default values
 [string]$defaultfolder = $PSScriptRoot
 [System.Object]$downloadlength = $null
-[string]$title = ""
 $ErrorActionPreference = 'SilentlyContinue'
 
 if ($PSVersionTable.PSVersion.Major -lt 7) {
@@ -38,28 +37,12 @@ if (Test-Path ".\log.txt") {
         Remove-Item -Force ".\log.txt"
     } until (-not (Test-Path ".\log.txt"))
 }
-if (Test-Path ".\invalids.txt") {
-    do {
-        Remove-Item -Force ".\invalids.txt"
-    } until (-not (Test-Path ".\invalids.txt"))
-}
-if ((Get-Content ".\uuids.txt" | Where-Object {$_ -notmatch "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}).Count -gt 1) {
-    "invalid UUID detected in uuids.txt`nenter to exit"
-    Read-Host
-    exit
-}
-if ((Get-Content ".\uuids.txt" | Sort-Object | Get-Unique).Count -lt (Get-Content ".\uuids.txt" | Sort-Object).Count) {
-    "duplication detected in uuids.txt`nenter to exit"
-    Read-Host
-    exit
-}
 New-Item -ItemType Directory -Path ".\musics" | Out-Null
 New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
 New-Item -ItemType File -Path ".\log.txt" | Out-Null
-New-Item -ItemType File -Path ".\invalids.txt" | Out-Null
 Write-Host "Open log.txt on vscode to wacth log"
 $downloadlength = Measure-Command -Expression {
-    Get-Content .\uuids.txt | Foreach-Object -ThrottleLimit 10 -Parallel {
+    (Invoke-RestMethod -URI "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ncs/uuids.txt").split("`n") | Foreach-Object -ThrottleLimit 10 -Parallel {
         [string]$title = ""
         [int]$hasnoname =  0
         [array]$logtext = @()
@@ -74,6 +57,7 @@ $downloadlength = Measure-Command -Expression {
             $logtext += "URL can be non-existent"
             $logtext += "Nothing downloaded"
         } else {
+            
             $logtext += "Title: ${title}"
             Invoke-RestMethod -Uri "https://ncs.io/track/download/${_}" -OutFile ".\musics\temp\${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\${_}.mp3")) {
@@ -111,7 +95,7 @@ $downloadlength = Measure-Command -Expression {
 "All files downloaded in $((($downloadlength.Hours).ToString()).PadLeft(2,'0')):$((($downloadlength.Minutes).ToString()).PadLeft(2,'0')):$((($downloadlength.Seconds).ToString()).PadLeft(2,'0')).$((($downloadlength.Milliseconds).ToString()).PadLeft(3,'0'))" | Out-File -FilePath ".\log.txt" -Append
 do {
     Remove-Item -Recurse -Force ".\musics\temp"
-} until (-not (Tes-Path ".\musics\temp"))
+} until (-not (Test-Path ".\musics\temp"))
 Get-ChildItem -Path ".\musics" | Where-Object {$_.Length -eq 0} | Remove-Item
 Write-Host -Object "Done`nEnter to exit"
 Read-Host
