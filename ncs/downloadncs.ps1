@@ -57,7 +57,7 @@ $downloadlength = Measure-Command -Expression {
             $logtext += "URL can be non-existent"
             $logtext += "Nothing downloaded"
         } else {
-            
+            $title = $title.Substring(22,$title.Length - 41)
             $logtext += "Title: ${title}"
             Invoke-RestMethod -Uri "https://ncs.io/track/download/${_}" -OutFile ".\musics\temp\${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\${_}.mp3")) {
