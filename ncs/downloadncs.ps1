@@ -60,7 +60,7 @@ New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
 New-Item -ItemType Directory -Path ".\invalids" | Out-Null
 New-Item -ItemType File -Path ".\log.txt" | Out-Null
 New-Item -ItemType File -Path ".\invalids.txt" | Out-Null
-Write-Host "Open log.txt in vscode to wacth log"
+Write-Host "Open log.txt on vscode to wacth log"
 $downloadlength = Measure-Command -Expression {
     Get-Content .\uuids.txt | Foreach-Object -ThrottleLimit 10 -Parallel {
         [string]$title = ""
