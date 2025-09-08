@@ -64,7 +64,7 @@ while(1)
             Remove-Item -Path ".\musics\temp\${uuid}.mp3`nLoaded zero-byte file`nThis file may be non-existent on server`nAlready removed"
         } else
         {
-            ffmpeg -y -hide_banner -loglevel -8 -vn -i ".\musics\temp\${uuid}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${uuid}.mp3"
+            Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title}"" "".\musics\${_}.mp3""" -NoNewWindow -Wait
             Write-Host "Downloaded successfully"
             Write-Host "URL: https://ncs.io/track/download/i_${uuid}"
         }
@@ -77,7 +77,7 @@ while(1)
             Remove-Item -Path ".\musics\temp\i_${uuid}.mp3`nLoaded zero-byte file`nThis file may be non-existent on server`nAlready removed"
         } else
         {
-            ffmpeg -y -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${uuid}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" ".\musics\i_${uuid}.mp3"
+            Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title} (Instrumental)"" "".\musics\i_${_}.mp3""" -NoNewWindow -Wait
             Write-Host "Title: ${title} (Instrumental)`nURL: https://ncs.io/track/download/i_${uuid}`nDownloaded successfully"
         }   
     }

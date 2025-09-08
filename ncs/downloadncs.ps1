@@ -57,7 +57,7 @@ $downloadlength = Measure-Command -Expression {
             $logtext += "URL can be non-existent"
             $logtext += "Nothing downloaded"
         } else {
-            $title = $title.Substring(22,$title.Length - 41)
+            $title = $title.Substring(22,$title.Length - 41).Trim()
             $logtext += "Title: ${title}"
             Invoke-RestMethod -Uri "https://ncs.io/track/download/${_}" -OutFile ".\musics\temp\${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\${_}.mp3")) {
@@ -70,7 +70,7 @@ $downloadlength = Measure-Command -Expression {
                 $logtext += "Already removed"
             } else {
                 $logtext += "Downloaded successfully"
-                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\${_}.mp3" -map "0:0" -c copy -metadata title="${title}" ".\musics\${_}.mp3"
+                Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title}"" "".\musics\${_}.mp3""" -NoNewWindow -Wait
             }
             Invoke-RestMethod -Uri "https://ncs.io/track/download/i_${_}" -OutFile ".\musics\temp\i_${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\i_${_}.mp3")) {
@@ -85,7 +85,7 @@ $downloadlength = Measure-Command -Expression {
                 $logtext += "URL: https://ncs.io/track/download/i_${_}"
                 $logtext += "Title: ${title} (Instrumental)"
                 $logtext += "Downloaded successfully"
-                ffmpeg -hide_banner -loglevel -8 -vn -i ".\musics\temp\i_${_}.mp3" -map "0:0" -c copy -metadata title="${title} (Instrumental)" "2.\musics\i_${_}.mp3"
+                Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title} (Instrumental)"" "".\musics\i_${_}.mp3""" -NoNewWindow -Wait
             }
         }
         $logtext += ""
@@ -97,6 +97,7 @@ do {
     Remove-Item -Recurse -Force ".\musics\temp"
 } until (-not (Test-Path ".\musics\temp"))
 Get-ChildItem -Path ".\musics" | Where-Object {$_.Length -eq 0} | Remove-Item
+"All files downloaded in $((($downloadlength.Hours).ToString()).PadLeft(2,'0')):$((($downloadlength.Minutes).ToString()).PadLeft(2,'0')):$((($downloadlength.Seconds).ToString()).PadLeft(2,'0')).$((($downloadlength.Milliseconds).ToString()).PadLeft(3,'0'))"
 Write-Host -Object "Done`nEnter to exit"
 Read-Host
 exit
