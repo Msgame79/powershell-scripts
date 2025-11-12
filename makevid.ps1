@@ -28,8 +28,8 @@ Extra Sounds
     25.IntroDrones
     26.Jonny
     27.Aztec_0
-    28.LockdownArrangement
-    29.UnknownArrangement
+    28.UnknownArrangement
+    29.LockdownArrangement
     30.LabDemo
     31.Naval1
     32.Naval2
@@ -56,6 +56,7 @@ Get-ChildItem -Name | Where-Object {$_ -match "\.ogg$"} | ForEach-Object {
 }
 ffmpeg -y -f concat -safe 0 -i ".\hffost.txt" -c flac ".\hffost.flac"
 #>
+$ext = "ogg"
 $filenames = @(
     "ClearSky"
     "FootprintInStone"
@@ -84,8 +85,8 @@ $filenames = @(
     "IntroDrones"
     "Jonny"
     "Aztec_0"
-    "LockdownArrangement"
     "UnknownArrangement"
+    "LockdownArrangement"
     "LabDemo"
     "Naval1"
     "Naval2"
@@ -129,8 +130,8 @@ $temptitles = @(
     "IntroDrones"
     "Jonny"
     "Aztec_0"
-    "LockdownArrangement"
     "UnknownArrangement"
+    "LockdownArrangement"
     "LabDemo"
     "Naval1"
     "Naval2"
@@ -195,7 +196,7 @@ $afi = ""
 for ($i = 0; $i -lt $informations.Count; $i++)
 {
     $text += "${temp}$($informations[$i].Section)`n$($informations[$i].Title)`nFilename\:$([regex]::Replace($informations[$i].Filename,"'","'\\\''"))`nDuration\:%{eif\:floor(floor(abs(t-$(if($i){$informations[$i-1].TotalDuration}else{0})-0.000025))/60)\:d\:2}\:%{eif\:mod(floor(abs(t-$(if($i){$informations[$i-1].TotalDuration}else{0})-0.000025))\,60)\:d\:2}/%{eif\:floor($($informations[$i].Duration)/60)\:d\:2}\:%{eif\:mod($($informations[$i].Duration)\,60)\:d\:2}':enable=gt(abs(t-0.000025)\,$(if($i){$informations[$i-1].TotalDuration}else{0}))*lte(abs(t-0.000025)\,$($informations[$i].TotalDuration)),"
-    $inputs += "-i ""$([regex]::Replace($informations[$i].Filename,"'","'\\\''")).ogg"" "
+    $inputs += "-i ""$([regex]::Replace($informations[$i].Filename,"'","'\\\''")).$ext"" "
     $afi += "[$($i+1):0]"
 }
 $text += "null"
