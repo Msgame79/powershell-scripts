@@ -45,16 +45,8 @@ Others
     41.Jazz blues slease sax - B 90 BPM
     42.EndingSoundBOOM_Final_replacement2
     43.Radio_Chatter_Loop
-
-結合したファイルを作成するときは
-file C:\full\path.flac(変換しておく)
-を並べたtxtで再エンコードしながらconcat実行
-実際のコマンドは
-Get-ChildItem -Name | Where-Object {$_ -match "\.ogg$"} | ForEach-Object {
-    ffmpeg -i "$_" -c flac "$($_.SubString(0,$_.Length-3))flac"
-    "$($_.SubString(0,$_.Length-3))flac" | Out-File ".\hffost.txt" -Append
-}
-ffmpeg -y -f concat -safe 0 -i ".\hffost.txt" -c flac ".\hffost.flac"
+エンコード時間メモ
+v1094332 13:22.59(43tracks)
 #>
 $ext = "ogg"
 $filenames = @(
@@ -156,7 +148,7 @@ $titles = @()
 $durations = @()
 $totalduration = 0
 $totaldurations = @()
-Set-Location $PSScriptRoot
+Set-Location $PSScriptRoot\HFFOST
 for ($i = 0; $i -lt $filenames.Count; $i++)
 {
     $titles += "$((($i+1).ToString()).PadLeft((($temptitles.Count).ToString()).Length,"0")) $($temptitles[$i])"
