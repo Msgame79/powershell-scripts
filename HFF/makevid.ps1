@@ -113,7 +113,7 @@ $temptitles = @(
     "Factory"
     "Golf"
     "City"
-    "ForestTwo"
+    "Forest"
     "Laboratory"
     "Lumber"
     "Redrock theme"
