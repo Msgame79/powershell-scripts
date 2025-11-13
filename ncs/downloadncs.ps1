@@ -42,7 +42,7 @@ New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
 New-Item -ItemType File -Path ".\log.txt" | Out-Null
 Write-Host "Open log.txt on vscode to wacth log"
 $downloadlength = Measure-Command -Expression {
-    (Invoke-RestMethod -URI "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ncs/uuids.txt").split("`n") | Foreach-Object -ThrottleLimit 10 -Parallel {
+    (if (Test-Path ".\uuids.txt") {Get-Content ".\uuids.txt"} else {Invoke-RestMethod "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ncs/uuids.txt"}).split("`n") | Foreach-Object -ThrottleLimit 10 -Parallel {
         [string]$title = ""
         [int]$hasnoname =  0
         [array]$logtext = @()
@@ -70,7 +70,7 @@ $downloadlength = Measure-Command -Expression {
                 $logtext += "Already removed"
             } else {
                 $logtext += "Downloaded successfully"
-                Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title}"" "".\musics\${_}.mp3""" -NoNewWindow -Wait
+                Start-Process "ffmpeg" "-hide_banner -y -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title}"" "".\musics\${_}.mp3""" -NoNewWindow -Wait
             }
             Invoke-RestMethod -Uri "https://ncs.io/track/download/i_${_}" -OutFile ".\musics\temp\i_${_}.mp3"
             if (-not (Test-Path -Path ".\musics\temp\i_${_}.mp3")) {
@@ -85,7 +85,7 @@ $downloadlength = Measure-Command -Expression {
                 $logtext += "URL: https://ncs.io/track/download/i_${_}"
                 $logtext += "Title: ${title} (Instrumental)"
                 $logtext += "Downloaded successfully"
-                Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title} (Instrumental)"" "".\musics\i_${_}.mp3""" -NoNewWindow -Wait
+                Start-Process "ffmpeg" "-hide_banner -y -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title} (Instrumental)"" "".\musics\i_${_}.mp3""" -NoNewWindow -Wait
             }
         }
         $logtext += ""
