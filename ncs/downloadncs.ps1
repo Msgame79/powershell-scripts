@@ -41,8 +41,9 @@ New-Item -ItemType Directory -Path ".\musics" | Out-Null
 New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
 New-Item -ItemType File -Path ".\log.txt" | Out-Null
 Write-Host "Open log.txt on vscode to wacth log"
+$a = if (Test-Path ".\uuids.txt") {Get-Content ".\uuids.txt"} else {Invoke-RestMethod "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ncs/uuids.txt"}
 $downloadlength = Measure-Command -Expression {
-    (if (Test-Path ".\uuids.txt") {Get-Content ".\uuids.txt"} else {Invoke-RestMethod "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ncs/uuids.txt"}).split("`n") | Foreach-Object -ThrottleLimit 10 -Parallel {
+    ($a).split("`n") | Foreach-Object -ThrottleLimit 10 -Parallel {
         [string]$title = ""
         [int]$hasnoname =  0
         [array]$logtext = @()
