@@ -11,7 +11,7 @@ New-Item -ItemType Directory "musics","musics\temp" | Out-Null
 Invoke-RestMethod "https://github.com/rockdaboot/wget2/releases/latest/download/wget2.exe" -OutFile "wget2.exe"
 Invoke-RestMethod "https://www.7-zip.org/a/7zr.exe" -OutFile "7zr.exe"
 Invoke-RestMethod ("https://github.com/GyanD/codexffmpeg/releases/download/"+[regex]::Matches((Invoke-RestMethod "https://github.com/GyanD/codexffmpeg/tags"),"\d{4}-\d{2}-\d{2}-git-[0-9a-f]+")[0].Value+"/ffmpeg-"+[regex]::Matches((Invoke-RestMethod "https://github.com/GyanD/codexffmpeg/tags"),"\d{4}-\d{2}-\d{2}-git-[0-9a-f]+")[0].Value+"-full_build.7z") -OutFile "ffmpeg.7z"
-.\7zr.exe 
+.\7zr.exe e -r -omusics\temp ffmpeg.7z ffmpeg.exe
 .\wget2.exe --max-threads (Get-ComputerInfo).CsNumberOfLogicalProcessors -r -X "artist,static,track,usage-policy" --reject-regex "artists|index|music|usage-policy|privacy|contact|AroundUs|about|favicon|robots" --no-robots ncs.io
 Set-Location "ncs.io"
 $uuids = [System.Collections.ArrayList]::New()
