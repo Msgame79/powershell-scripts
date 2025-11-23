@@ -1,7 +1,7 @@
 #default values
 [string]$defaultfolder = $PSScriptRoot
-[System.Object]$downloadlength = $null
 $ErrorActionPreference = 'SilentlyContinue'
+
 Set-Location $defaultfolder
 ffmpeg -version | Out-Null
 if (-not $?) {
@@ -9,43 +9,82 @@ if (-not $?) {
     Read-Host
     exit
 }
-if ($PSVersionTable.PSVersion.Major -lt 7) {
-    "use PowerShell 7 or newer`nenter to exit"
+
+if (-not (Test-Path ".\musics"))
+{
+    "musics not found`nrun downloadncs.ps1 first`nEnter to exit"
     Read-Host
     exit
 }
-#force stat
-while (Test-Path ".\musics")
+
+if ((Test-Path ".\musics\temp"))
 {
-    Remove-Item -Recurse -Force ".\musics"
-} 
-while (Test-Path ".\invalids")
-{
-    Remove-Item -Recurse -Force ".\invalids"
+    if ((Get-ChildItem ".\musics\temp").Count)
+    {
+        Write-Host "Waiting for other process..."
+        do
+        {
+        } until (-not (Test-Path ".\musics\temp"))
+    }
 }
-while (Test-Path ".\log.txt")
-{
-    Remove-Item -Force ".\log.txt"
-}
-New-Item -ItemType Directory -Path ".\musics" | Out-Null
-New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
-New-Item -ItemType File -Path ".\log.txt" | Out-Null
-Write-Host "Open log.txt on vscode to wacth log"
-Invoke-RestMethod "https://github.com/rockdaboot/wget2/releases/latest/download/wget2.exe" -OutFile ".\wget2.exe"
-(Invoke-RestMethod "https://raw.githubusercontent.com/Msgame79/powershell-scripts/refs/heads/main/ncs/uuids.txt").split("`n") | ForEach-Object {"https://ncs.io/track/download/$_"} | Out-File "urls.txt"
-Set-Location .\musics\temp
-wget2.exe --max-threads (Get-ComputerInfo).CsNumberOfLogicalProcessors -i ..\..\urls.txt
-Get-ChildItem -Name | Foreach-Object -ThrottleLimit (Get-ComputerInfo).CsNumberOfLogicalProcessors -Parallel {
-  $uuid = [Regex]::Matches($_,"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")[0].Value
-  $artist = 
-}
-"All files downloaded in $((($downloadlength.Hours).ToString()).PadLeft(2,'0')):$((($downloadlength.Minutes).ToString()).PadLeft(2,'0')):$((($downloadlength.Seconds).ToString()).PadLeft(2,'0')).$((($downloadlength.Milliseconds).ToString()).PadLeft(3,'0'))" | Out-File -FilePath ".\log.txt" -Append
 while (Test-Path ".\musics\temp")
 {
     Remove-Item -Recurse -Force ".\musics\temp"
 }
-Get-ChildItem -Path ".\musics" | Where-Object {$_.Length -eq 0} | Remove-Item
-"All files downloaded in $((($downloadlength.Hours).ToString()).PadLeft(2,'0')):$((($downloadlength.Minutes).ToString()).PadLeft(2,'0')):$((($downloadlength.Seconds).ToString()).PadLeft(2,'0')).$((($downloadlength.Milliseconds).ToString()).PadLeft(3,'0'))"
-Write-Host -Object "Done`nEnter to exit"
-Read-Host
-exit
+
+while(1)
+{
+    New-Item -ItemType Directory -Path ".\musics\temp" | Out-Null
+    do
+    {
+        Clear-Host
+        $uuid = Read-Host "Enter URL or UUID"
+    } until ($uuid -cmatch "^(https://(www\.)?ncs\.io/track/download/)?([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$")
+    $uuid = $Matches.3
+    Write-Host "UUID: ${uuid}"
+    $title = ([System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding("iso-8859-1").GetBytes((Invoke-WebRequest -URI "https://ncs.io/track/download/${uuid}" -Method Head).Headers["Content-Disposition"]))).SubString(22, ([System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding("iso-8859-1").GetBytes((Invoke-WebRequest -URI "https://ncs.io/track/download/${uuid}" -Method Head).Headers["Content-Disposition"]))).Length - 41)
+    if ($title.Length -eq 0)
+    {
+        Write-Host "Failed to load title"
+    } else 
+    {
+        Write-Host "Title: ${title}"
+    }
+    if (Test-Path ".\musics\${uuid}.mp3")
+    {
+        Write-Host "Already exists"
+    } else
+    {
+        Invoke-RestMethod -Uri "https://ncs.io/track/download/${uuid}" -OutFile ".\musics\temp\${uuid}.mp3"
+        if (-not (Test-Path -Path ".\musics\temp\${uuid}.mp3"))
+        {
+            Write-Host "Failed to download`nAn error occurred while downloading"
+        } elseif ((Get-ChildItem ".\musics\temp\${uuid}.mp3").Length -eq 0)
+        {
+            Remove-Item -Path ".\musics\temp\${uuid}.mp3`nLoaded zero-byte file`nThis file may be non-existent on server`nAlready removed"
+        } else
+        {
+            Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title}"" "".\musics\${_}.mp3""" -NoNewWindow -Wait
+            Write-Host "Downloaded successfully"
+            Write-Host "URL: https://ncs.io/track/download/i_${uuid}"
+        }
+        Invoke-RestMethod -Uri "https://ncs.io/track/download/i_${uuid}" -OutFile ".\musics\temp\i_${uuid}.mp3"
+        if (-not (Test-Path -Path ".\musics\temp\i_${uuid}.mp3"))
+        {
+            Write-Host "Failed to download`nAn error occurred while downloading"
+        } elseif ((Get-ChildItem ".\musics\temp\i_${uuid}.mp3").Length -eq 0)
+        {
+            Remove-Item -Path ".\musics\temp\i_${uuid}.mp3`nLoaded zero-byte file`nThis file may be non-existent on server`nAlready removed"
+        } else
+        {
+            Start-Process "ffmpeg" "-hide_banner -loglevel -8 -vn -i "".\musics\temp\${_}.mp3"" -map ""0:0"" -c copy -metadata title=""${title} (Instrumental)"" "".\musics\i_${_}.mp3""" -NoNewWindow -Wait
+            Write-Host "Title: ${title} (Instrumental)`nURL: https://ncs.io/track/download/i_${uuid}`nDownloaded successfully"
+        }   
+    }
+    do
+    {
+        Remove-Item -Recurse -Force ".\musics\temp"
+    } until (-not (Test-Path ".\musics\temp"))
+    Write-Host -Object "Done`nEnter to restart"
+    Read-Host
+}
