@@ -1,6 +1,0 @@
-Last UUID: df9f697c-2fd3-44bc-bb83-8a46f883d280
-Title: All We've Ever Known (ft. Fred V & Immy Odon)
-Released on 29 Aug 2025
-
-847e0593-e56d-4171-85ff-554d10dd01fd
-何故かエクスプローラーにタイトル情報が表示されない
