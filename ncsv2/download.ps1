@@ -1,3 +1,10 @@
+if ($PSVersionTable.PSVersion.Major -lt 7)
+{
+    "Run this script on Version 7 or above"
+    Read-Host
+    exit(1)
+}
+
 Set-Location $PSScriptRoot
 while ((Get-Childitem -Name -Directory -Recurse | Where-Object {$_ -match "^(ncs\.io|musics)$"}).Count)
 {
