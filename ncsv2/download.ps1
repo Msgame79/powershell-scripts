@@ -38,7 +38,7 @@ Get-ChildItem | ForEach-Object {
 Set-Location $PSScriptRoot
 $uuids  | ForEach-Object {"https://ncs.io/track/download/${_}"} | Out-File "musics\temp\uuids.txt"
 $credits | Out-File "credits.txt"
-#Remove-Variable "uuids","credits"
+Remove-Variable "uuids","credits"
 Set-Location "musics\temp"
 ..\..\wget2.exe --max-threads (Get-ComputerInfo).CsNumberOfLogicalProcessors --no-robots -i uuids.txt
 while ((Get-Childitem -Name -File | Where-Object {$_ -match "^(uuids\.txt)$"}).Count)
