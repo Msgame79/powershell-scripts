@@ -1,6 +1,7 @@
 if ($PSVersionTable.PSVersion.Major -lt 7)
 {
-    "Run this script on Version 7 or above"
+    "Run this script on Version 7 or above`nhttps://github.com/PowerShell/PowerShell/releases/latest"
+
     Read-Host
     exit(1)
 }
