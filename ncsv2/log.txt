@@ -1,0 +1,12 @@
+Began at 2025-11-30 08:09:12
+Cleaning up files(1/9)...Done (00:00:03.740)
+Setting up files(2/9)...Done (00:00:11.871)
+Downloading HTMLs of each track(3/9)...Done (00:07:40.795)
+Extracting data from HTMLs(4/9)...Done (00:00:46.722)
+Generating urls.txt(5/9)...Done (00:00:00.058)
+Generating credits.txt(6/9)...Done (00:00:00.037)
+Downloading tracks(7/9)...Done (00:05:22.829)
+Re-encoding tracks for more accurate data(8/9)...Done (00:19:44.735)
+Cleaning up files(9/9)...Done (00:00:03.781)
+Completed at 2025-11-30 08:43:07
+Completed this script in 00:33:54.624
