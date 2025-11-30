@@ -33,7 +33,7 @@ $timer = Measure-Command {
         Invoke-RestMethod "https://github.com/rockdaboot/wget2/releases/latest/download/wget2.exe" -OutFile "wget2.exe"
         Invoke-RestMethod "https://www.7-zip.org/a/7zr.exe" -OutFile "7zr.exe"
         Invoke-RestMethod ("https://github.com/GyanD/codexffmpeg/releases/download/"+[regex]::Matches((Invoke-RestMethod "https://github.com/GyanD/codexffmpeg/tags"),"\d{4}-\d{2}-\d{2}-git-[0-9a-f]+")[0].Value+"/ffmpeg-"+[regex]::Matches((Invoke-RestMethod "https://github.com/GyanD/codexffmpeg/tags"),"\d{4}-\d{2}-\d{2}-git-[0-9a-f]+")[0].Value+"-full_build.7z") -OutFile "ffmpeg.7z"
-        .\7zr.exe e -r -omusics\temp ffmpeg.7z ffmpeg.exe | Out-Null
+        .\7zr.exe e -r -omusics\temp ffmpeg.7z ffmpeg.exe ffprobe.exe | Out-Null
     }
     $logtext += "Done ($($timer1[1].Hours.ToString().PadLeft(2,"0")):$($timer1[1].Minutes.ToString().PadLeft(2,"0")):$($timer1[1].Seconds.ToString().PadLeft(2,"0")).$($timer1[1].Milliseconds.ToString().PadLeft(3,"0")))`nDownloading HTMLs of each track(3/9)..."
     Clear-Host
