@@ -103,7 +103,7 @@ $timer = Measure-Command {
             $tracks = $using:tracks
             $genres = $using:genres
             $pids = [System.Collections.Generic.List[int]]::New()
-            $pids.Add((Start-Process ".\ffmpeg.exe" "-v -8 -i $($uuids[$_]) -metadata artist=""$($artists[$_])"" -metadata title=""$($tracks[$_])"" -metadata genre=""$($genres[$_])"" -map a:0 -c:a libmp3lame -b:a 320k ..\$($uuids[$_]).mp3" -WindowStyle Hidden -PassThru).Id)
+            $pids.Add((Start-Process ".\ffmpeg.exe" "-nostdin -v -8 -i $($uuids[$_]) -metadata artist=""$($artists[$_])"" -metadata title=""$($tracks[$_])"" -metadata genre=""$($genres[$_])"" -map a:0 -c:a libmp3lame -b:a 320k ..\$($uuids[$_]).mp3" -WindowStyle Hidden -PassThru).Id)
             Wait-Process -Id $pids
         }
         Set-Location $PSScriptRoot
