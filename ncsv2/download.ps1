@@ -1,7 +1,6 @@
 if ($PSVersionTable.PSVersion.Major -lt 7)
 {
-    "Run this script on Version 7 or above`nhttps://github.com/PowerShell/PowerShell/releases/latest"
-
+    "Run this script on Version 7 or newer`nhttps://github.com/PowerShell/PowerShell/releases/latest"
     Read-Host
     exit(1)
 }
@@ -55,15 +54,15 @@ $timer = Measure-Command {
             $a = New-Object -ComObject HTMLfile
             $a.write([system.text.encoding]::Unicode.GetBytes((Get-Content $_ -Raw)))
             $uuids.AddRange(@(@($a.getElementsByClassName("btn black")).nameprop)) | Out-Null
-            $artists.Add([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-artist=\`" *(.+?[^\\])\`"").Groups[-1].Value) | Out-Null
-            $genres.Add([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-genre=\`" *(.+?[^\\])\`"").Groups[-1].Value) | Out-Null
-            $tracks.Add([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-track=\`" *(.+?[^\\])\`"").Groups[-1].Value) | Out-Null
+            $artists.Add([System.Net.WebUtility]::HtmlDecode([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-artist=\`" *(.+?[^\\])\`"").Groups[-1].Value)) | Out-Null
+            $genres.Add([System.Net.WebUtility]::HtmlDecode([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-genre=\`" *(.+?[^\\])\`"").Groups[-1].Value)) | Out-Null
+            $tracks.Add([System.Net.WebUtility]::HtmlDecode([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-track=\`" *(.+?[^\\])\`"").Groups[-1].Value)) | Out-Null
             $credits.Add(@($a.GetElementsByClassName("p-copy")).innerText) | Out-Null
             if ($uuids[-1] -match "^i_")
             {
-                $artists.Add([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-artist=\`" *(.+?[^\\])\`"").Groups[-1].Value) | Out-Null
-                $genres.Add([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-genre=\`" *(.+?[^\\])\`"").Groups[-1].Value) | Out-Null
-                $tracks.Add([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-track=\`" *(.+?[^\\])\`"").Groups[-1].Value + " (Instrumental)") | Out-Null
+                $artists.Add([System.Net.WebUtility]::HtmlDecode([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-artist=\`" *(.+?[^\\])\`"").Groups[-1].Value)) | Out-Null
+                $genres.Add([System.Net.WebUtility]::HtmlDecode([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-genre=\`" *(.+?[^\\])\`"").Groups[-1].Value)) | Out-Null
+                $tracks.Add([System.Net.WebUtility]::HtmlDecode([Regex]::matches(@($a.getElementsByClassName("btn black")).outerHTML,"data-track=\`" *(.+?[^\\])\`"").Groups[-1].Value + " (Instrumental)")) | Out-Null
             }
             Remove-Variable a
         }
