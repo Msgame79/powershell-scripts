@@ -4,6 +4,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7)
     Read-Host
     exit(1)
 }
+# Set-PSDebug -Trace 2
 $ErrorActionPreference = 'SilentlyContinue'
 $logtext = ""
 $timer1 = @()
